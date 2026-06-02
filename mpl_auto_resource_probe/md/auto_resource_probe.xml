@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mdscript name="mp_autoresourceprobe" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd" version="1">
+  <cues>
+    <cue name="MonitorPlayerShips" instantiate="true">
+      <conditions>
+        <event_object_changed_sector object="player.ship" />
+      </conditions>
+      
+      <actions>
+        <!-- Get the existing probes so we can remove them afterwards -->
+        <find_object name="$resourceProbesInSector" class="class.resourceprobe" owner="faction.player" space="player.ship.sector" multiple="true"/>
+
+        <!-- Make sure the sector has ANY resource that can be mined -->
+        <set_value name="$resourcesToScan" exact="[ware.silicon, ware.ore, ware.ice, ware.nividium, ware.helium, ware.hydrogen, ware.methane]"/>
+        <set_value name="$yieldsToScan" exact="['lowest','verylow','lowminus','low','lowplus','lowextra','medlow','medium','medplus','medhigh','highlow','high','highplus','veryhigh','highest']"/>
+        
+        <set_value name="$sectorHasResources" exact="false"/>
+        <do_all exact="$resourcesToScan.count" counter="$i">
+          <set_value name="$resource" exact="$resourcesToScan.{$i}"/>
+          
+          <do_if value="$resource == null">
+            <continue/>
+          </do_if>
+          
+          <set_value name="$yieldResult" exact="0"/>
+          <do_for_each name="$yieldToScan" in="$yieldsToScan">
+            <get_highest_resource_yield result="$yieldResult" sector="player.ship.sector" ware="$resource" yieldname="$yieldToScan" comment="see library/regionyield.xml" />
+            <do_if value="$yieldResult gt 0">
+              <set_value name="$sectorHasResources" exact="true"/>
+              <break/>
+            </do_if>
+          </do_for_each>
+          
+          <do_if value="$sectorHasResources">
+            <break/>
+          </do_if>
+        </do_all>
+
+        <!-- Don't add resources to sectors without any resource areas -->
+        <do_if value="$sectorHasResources">
+          <set_value name="$probeSpacing" exact="70000" />
+          <set_value name="$probeOffsetY" exact="15000" />
+          
+          <set_value name="$corePosition" exact="player.ship.sector.coreposition" />
+          <set_value name="$coreSize" exact="(player.ship.sector.coresize)i" />
+          <set_value name="$coreHalfSize" exact="$coreSize / 2" />
+          <set_value name="$remainder" exact="$coreHalfSize % $probeSpacing" />
+          <set_value name="$coreMod" exact="$coreHalfSize - $remainder" />
+          <set_value name="$incrementsX" exact="$coreMod / $probeSpacing" />
+          <set_value name="$xOffset" exact="$corePosition.x / 2" />
+          <set_value name="$y" exact="$corePosition.y - $probeOffsetY" />
+          <set_value name="$zOffset" exact="$corePosition.z / 2" />
+
+          <set_value name="$counterZ" exact="0 - $incrementsX" />
+          <do_while value="$counterZ lt ($incrementsX + 1)">
+            <set_value name="$z" exact="$counterZ * $probeSpacing + $zOffset" />
+            
+            <set_value name="$counterX" exact="0 - $incrementsX" />
+            <do_while value="$counterX lt ($incrementsX + 1)">
+              <set_value name="$x" exact="$counterX * $probeSpacing + $xOffset" />
+
+              <create_object macro="macro.eq_arg_resourceprobe_01_macro" owner="faction.player" sector="player.ship.sector">
+                <position x="$x" y="$y" z="$z"/>
+              </create_object>
+
+              <set_value name="$counterX" exact="$counterX + 1" />
+            </do_while>
+
+            <set_value name="$counterZ" exact="$counterZ + 1" />
+          </do_while>
+        </do_if>
+
+        <!-- Remove the existing probes -->
+        <do_all exact="$resourceProbesInSector.count" counter="$i">
+          <destroy_object object="$resourceProbesInSector.{$i}" explosion="false" />
+        </do_all>
+        
+        <!-- Tidy up -->
+        <remove_value name="$resourcesToScan"/>
+        <remove_value name="$yieldsToScan"/>
+        <remove_value name="$resourceProbesInSector"/>
+      </actions>
+    </cue>
+  </cues>
+</mdscript>

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mdscript name="mp_autoscansector" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd" version="1">
+  <cues>
+    <cue name="MonitorPlayerShips" instantiate="true">
+      <conditions>
+        <event_object_changed_sector object="player.ship" />
+      </conditions>
+      
+      <actions>
+        <find_object name="$stationsInSector" class="class.station" space="player.ship.sector" multiple="true"/>
+        <do_all exact="$stationsInSector.count" counter="$i">
+          <set_value name="$station" exact="$stationsInSector.{$i}" />
+
+          <do_if value="$station.owner != faction.player">
+            <set_known object="$station" known="true"/>
+            <set_object_scanned object="$station"/>
+          </do_if>
+        </do_all>
+  
+        <find_object name="$asteroidsInSector" class="class.asteroid" space="player.ship.sector" multiple="true"/>
+        <do_all exact="$asteroidsInSector.count" counter="$i">
+          <set_value name="$asteroid" exact="$asteroidsInSector.{$i}" />
+
+          <set_known object="$asteroid" known="true"/>
+          <set_object_scanned object="$asteroid"/>
+        </do_all>
+
+        <remove_value name="$asteroidsInSector"/>
+        <remove_value name="$shipsInSector"/>
+        <remove_value name="$stationsInSector"/>
+      </actions>
+    </cue>
+  </cues>
+</mdscript>

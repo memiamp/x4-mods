@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+  <replace sel="//order[@id='CollectDropsInRadius']/params/param[@name='radius']/@default">350km</replace>
+  <replace sel="//order[@id='CollectDropsInRadius']/params/param[@name='radius']/input_param[@name='max']/@value">350km</replace>
+  <replace sel="//attention[@min='unknown']/actions/do_if[@value='this.sector != $destination.{1} or this.assignedcontrolled.distanceto.{$destination} gt 10km']/@value">this.sector != $destination.{1}</replace>
+  <add sel="//attention[@min='unknown']/actions/find_object" type="@sortbydistanceto">this</add>
+  <remove sel="//attention[@min='unknown']/actions/find_object/match_distance" />
+  
+  <add sel="//label[@name='finish']" pos="after">
+    <!-- Automatically sell ammo -->
+    <do_all exact="this.assignedcontrolled.ammostorage.missile.table.keys.count" counter="$r" reverse="true">
+      <set_value name="$missileKey" exact="this.assignedcontrolled.ammostorage.missile.table.keys.{$r}"/>
+      <set_value name="$value" exact="this.assignedcontrolled.ammostorage.missile.table.{$missileKey}"/>
+      <set_value name="$sellValue" exact="$missileKey.ware.averageprice * $value"/>
+        
+      <remove_ammo object="this.assignedcontrolled" macro="$missileKey" amount="$value"/>
+      
+      <reward_player money="$sellValue" />
+      
+      <write_to_logbook category="general" title="{20102, 1}" text="{20102, 2}.[this.assignedcontrolled.knownname, this.assignedcontrolled.idcode, $value, $missileKey.ware.name, $sellValue.formatted.default]" object="this.assignedcontrolled"/>
+
+      <set_value name="$title" exact="{20102, 5}"/>
+      <set_value name="$text" exact="{20102, 6}.[this.assignedcontrolled.knownname, this.assignedcontrolled.idcode, $value, $missileKey.ware.name, $sellValue.formatted.default]"/>
+      <show_notification text="$title + '\n' + $text"/>
+    </do_all>
+    
+    <!-- Automatically sell cargo -->
+    <do_all exact="this.assignedcontrolled.cargo.table.keys.count" counter="$r" reverse="true">
+      <set_value name="$ware" exact="this.assignedcontrolled.cargo.table.keys.{$r}"/>
+      <set_value name="$amount" exact="this.assignedcontrolled.cargo.table.{$ware}"/>
+      <set_value name="$sellValue" exact="$ware.averageprice * $amount"/>
+
+      <remove_cargo object="this.assignedcontrolled" ware="$ware" exact="$amount"/>
+
+      <reward_player money="$sellValue" />
+
+      <write_to_logbook category="general" title="{20102, 3}" text="{20102, 4}.[this.assignedcontrolled.knownname, this.assignedcontrolled.idcode, $amount, $ware.name, $sellValue.formatted.default]" object="this.assignedcontrolled"/>
+
+      <set_value name="$title" exact="{20102, 7}"/>
+      <set_value name="$text" exact="{20102, 8}.[this.assignedcontrolled.knownname, this.assignedcontrolled.idcode, $amount, $ware.name, $sellValue.formatted.default]"/>
+      <show_notification text="$title + '\n' + $text"/>
+    </do_all>
+  </add>
+</diff>

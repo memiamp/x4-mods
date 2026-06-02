@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content name="MPL Collect In Sector" id="mpl_collectsector" author="Memia" version="1" date="2026-05-19">
+  <text language="44" name="MPL Collect In Sector" description="Changes drop collection to the whole sector instead of the radar range"></text>
+</content>

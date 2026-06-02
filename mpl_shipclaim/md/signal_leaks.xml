@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+  <add sel="//cue[@name='PlayerScannedClaimLeak']/actions/do_if[@value='$ship and $ship.canbeclaimed']/signal_objects" pos="before">
+    <create_control_entity object="$ship" post="controlpost.aipilot">
+      <select race="race.argon" tags="tag.aipilot"/>
+      <owner exact="faction.player"/>
+    </create_control_entity>
+  </add>
+  
+  <add sel="//cue[@name='PlayerScannedClaimLeak']/actions/do_if[@value='$ship and $ship.canbeclaimed']/signal_objects" pos="after">
+    <signal_objects object="$player" param="'SendToNearestDock'" param2="$ship" delay="5s" comment="Send ship to nearest safe dock"/>
+  </add>
+  
+  <add sel="//cue[@name='PlayerScannedClaimLeak']" pos="after">
+    <cue name="SendToNearestDock" instantiate="true">
+      <conditions>
+        <event_object_signalled object="player.entity" param="'SendToNearestDock'" />
+      </conditions>
+      <actions>
+        <do_if value="event.param2.isclass.entity">
+          <set_value name="$claimedship" exact="event.param2.ship"/>
+        </do_if>
+        <do_elseif value="event.param2.isclass.ship">
+          <set_value name="$claimedship" exact="event.param2"/>
+        </do_elseif>
+
+        <do_if value="$claimedship?">
+          <find_station name="$stations" space="player.galaxy" sortbydistanceto="$claimedship" multiple="true">
+            <match knownto="$claimedship.owner"/>
+            <match checkoperational="true"/>
+            <match cansupplyclass="$claimedship.class"/>
+            <match mayattack="$claimedship" negate="true"/>
+            <match_relation_to faction="$claimedship.owner" comparison="ge" relation="neutral" />
+          </find_station>
+          
+          <do_for_each name="$stationinlist" in="$stations"> 
+            <!-- Ensure that the station is in a friendly sector -->
+            <do_if value="$stationinlist.sector.owner.hasrelation.dock.{$claimedship.owner}">
+              <set_value name="$station" exact="$stationinlist" />
+              <break />
+            </do_if>
+          </do_for_each>
+          
+          <do_if value="$station">
+            <set_value name="$staytime" min="30min" max="2h"/>
+
+            <create_order object="$claimedship" id="'DockAndWait'" immediate="true">
+              <param name="destination" value="$station"/>
+              <param name="timeout" value="$staytime"/>
+            </create_order>
+            
+            <write_to_logbook category="general" title="{20103, 1}" text="{20103, 2}.[$claimedship.knownname, $claimedship.idcode, $station.name, $station.sector.name]" object="$claimedship"/>
+
+            <set_value name="$title" exact="{20103, 1}"/>
+            <set_value name="$text" exact="{20103, 2}.[$claimedship.knownname, $claimedship.idcode, $station.name, $station.sector.name]"/>
+            <show_notification text="$title + '\n' + $text"/>
+          </do_if>
+          <do_else>
+            <write_to_logbook category="general" title="{20103, 1}" text="{20103, 3}.[$claimedship.knownname, $claimedship.idcode]" object="$claimedship"/>
+
+            <set_value name="$title" exact="{20103, 1}"/>
+            <set_value name="$text" exact="{20103, 3}.[$claimedship.knownname, $claimedship.idcode]"/>
+            <show_notification text="$title + '\n' + $text"/>
+          </do_else>
+        </do_if>
+      </actions>
+    </cue>
+  </add>
+</diff>

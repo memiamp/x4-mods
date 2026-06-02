@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content name="MPL Automatic Resource Probe" id="mpl_autoprobe" author="Memia" version="1" date="2026-05-09">
+  <text language="44" name="MPL Automatic Resource Probe" description="Automatically adds resource probes to sectors"></text>
+</content>

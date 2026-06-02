@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+	<add sel="/macros/macro[@name='scanner_gen_s_object_01_mk2_macro']/properties/scan" type="@range">400000</add>
+</diff>

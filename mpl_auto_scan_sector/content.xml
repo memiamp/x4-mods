@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content name="MPL Auto Scan Sector" id="mpl_autoscansector" author="Memia" version="1" date="2026-05-10">
+  <text language="44" name="MPL Auto Scan Sector" description="Automatically scans in sectors"></text>
+</content>
