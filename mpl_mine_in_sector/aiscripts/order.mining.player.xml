@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+  <replace sel="//order[@id='MiningPlayer']/params/param[@name='radius']/@default">350km</replace>
+  <replace sel="//order[@id='MiningPlayer']/params/param[@name='radius']/input_param[@name='max']/@value">350km</replace>
+</diff>

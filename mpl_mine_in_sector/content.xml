@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content name="MPL Mine In Sector" id="mpl_minesector" author="Memia" version="1" date="2026-06-05">
+  <text language="44" name="MPL Mine In Sector" description="Changes mining to the whole sector instead of the radar range"></text>
+</content>
