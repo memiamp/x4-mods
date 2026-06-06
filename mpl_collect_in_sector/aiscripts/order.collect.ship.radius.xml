@@ -8,37 +8,47 @@
   
   <add sel="//label[@name='finish']" pos="after">
     <!-- Automatically sell ammo -->
+    <set_value name="$message" exact="''"/>
+    <set_value name="$totalSellValue" exact="0"/>
     <do_all exact="this.assignedcontrolled.ammostorage.missile.table.keys.count" counter="$r" reverse="true">
-      <set_value name="$missileKey" exact="this.assignedcontrolled.ammostorage.missile.table.keys.{$r}"/>
-      <set_value name="$value" exact="this.assignedcontrolled.ammostorage.missile.table.{$missileKey}"/>
-      <set_value name="$sellValue" exact="$missileKey.ware.averageprice * $value"/>
+      <set_value name="$missile" exact="this.assignedcontrolled.ammostorage.missile.table.keys.{$r}"/>
+      <set_value name="$amount" exact="this.assignedcontrolled.ammostorage.missile.table.{$missile}"/>
+      <set_value name="$sellValue" exact="$missile.ware.averageprice * $amount"/>
         
-      <remove_ammo object="this.assignedcontrolled" macro="$missileKey" amount="$value"/>
+      <remove_ammo object="this.assignedcontrolled" macro="$missile" amount="$amount"/>
       
-      <reward_player money="$sellValue" />
-      
-      <write_to_logbook category="general" title="{20102, 1}" text="{20102, 2}.[this.assignedcontrolled.knownname, this.assignedcontrolled.idcode, $value, $missileKey.ware.name, $sellValue.formatted.default]" object="this.assignedcontrolled"/>
-
-      <set_value name="$title" exact="{20102, 5}"/>
-      <set_value name="$text" exact="{20102, 6}.[this.assignedcontrolled.knownname, this.assignedcontrolled.idcode, $value, $missileKey.ware.name, $sellValue.formatted.default]"/>
-      <show_notification text="$title + '\n' + $text"/>
+      <set_value name="$totalSellValue" exact="($totalSellValue + $sellValue)"/>
+      <set_value name="$message" exact="$message + {20102, 3}.[$missile.ware.name, $amount, $sellValue.formatted.default]"/>
     </do_all>
     
+		<do_if value="$message != ''">
+			<write_to_logbook category="general" title="{20102, 1}" text="{20102, 4}.[this.assignedcontrolled.name, this.assignedcontrolled.idcode, $message, $totalSellValue.formatted.default]"/>
+		</do_if>
+    
+    <do_if value="$totalSellValue gt 0">
+      <reward_player money="$totalSellValue" />
+    </do_if>
+    
     <!-- Automatically sell cargo -->
+    <set_value name="$message" exact="''"/>
+    <set_value name="$totalSellValue" exact="0"/>
     <do_all exact="this.assignedcontrolled.cargo.table.keys.count" counter="$r" reverse="true">
       <set_value name="$ware" exact="this.assignedcontrolled.cargo.table.keys.{$r}"/>
       <set_value name="$amount" exact="this.assignedcontrolled.cargo.table.{$ware}"/>
       <set_value name="$sellValue" exact="$ware.averageprice * $amount"/>
 
       <remove_cargo object="this.assignedcontrolled" ware="$ware" exact="$amount"/>
-
-      <reward_player money="$sellValue" />
-
-      <write_to_logbook category="general" title="{20102, 3}" text="{20102, 4}.[this.assignedcontrolled.knownname, this.assignedcontrolled.idcode, $amount, $ware.name, $sellValue.formatted.default]" object="this.assignedcontrolled"/>
-
-      <set_value name="$title" exact="{20102, 7}"/>
-      <set_value name="$text" exact="{20102, 8}.[this.assignedcontrolled.knownname, this.assignedcontrolled.idcode, $amount, $ware.name, $sellValue.formatted.default]"/>
-      <show_notification text="$title + '\n' + $text"/>
+      
+      <set_value name="$totalSellValue" exact="($totalSellValue + $sellValue)"/>
+      <set_value name="$message" exact="$message + {20102, 3}.[$ware.name, $amount, $sellValue.formatted.default]"/>
     </do_all>
+    
+		<do_if value="$message != ''">
+			<write_to_logbook category="general" title="{20102, 2}" text="{20102, 4}.[this.assignedcontrolled.name, this.assignedcontrolled.idcode, $message, $totalSellValue.formatted.default]"/>
+		</do_if>
+    
+    <do_if value="$totalSellValue gt 0">
+      <reward_player money="$totalSellValue" />
+    </do_if>
   </add>
 </diff>

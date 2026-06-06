@@ -2,12 +2,8 @@
 <language id="44">
   <page id="20102">
     <t id="1">Sold Ammo</t>
-    <t id="2">%1(ship name) \(%2\)(ship ID code) sold %3(amount) of %4(ammo name) for %5(price) Cr.</t>
-    <t id="3">Sold Cargo</t>
-    <t id="4">%1(ship name) \(%2\)(ship ID code) sold %3(amount) of %4(ware name) for %5(price) Cr.</t>
-    <t id="5">Sold Ammo</t>
-    <t id="6">%s(ship name) \(%2\)(ship ID code)\nSold %3(amount) of %4(ammo name) for %5(price) Cr.</t>
-    <t id="7">Sold Cargo</t>
-    <t id="8">%s(ship name) \(%2\)(ship ID code)\nSold %3(amount) of %4(ware name) for %5(price) Cr.</t>
+    <t id="2">Sold Cargo</t>
+    <t id="3">  \033B%1\033X x\033C%2\033X = \033G%3\033XCr\n</t>
+    <t id="4">%1(ship name) \(%2\)(ship ID code) sold:\n%3(sale list)Total Sale Value: \033G%4(total value)\033XCr</t>
   </page>
 </language>
