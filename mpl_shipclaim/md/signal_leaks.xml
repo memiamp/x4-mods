@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <diff>
   <add sel="//cue[@name='PlayerScannedClaimLeak']/actions/do_if[@value='$ship and $ship.canbeclaimed']/signal_objects" pos="before">
+    <set_object_name object="$ship" name="'__' + $ship.name"/>
+    
     <create_control_entity object="$ship" post="controlpost.aipilot">
       <select race="race.argon" tags="tag.aipilot"/>
       <owner exact="faction.player"/>
@@ -8,7 +10,7 @@
   </add>
   
   <add sel="//cue[@name='PlayerScannedClaimLeak']/actions/do_if[@value='$ship and $ship.canbeclaimed']/signal_objects" pos="after">
-    <signal_objects object="$player" param="'SendToNearestDock'" param2="$ship" delay="5s" comment="Send ship to nearest safe dock"/>
+    <signal_objects object="$player" param="'SendToNearestDock'" param2="$ship" param3="true" delay="5s" comment="Send ship to nearest safe dock"/>
   </add>
   
   <add sel="//cue[@name='PlayerScannedClaimLeak']" pos="after">
@@ -51,16 +53,20 @@
             
             <write_to_logbook category="general" title="{20103, 1}" text="{20103, 2}.[$claimedship.knownname, $claimedship.idcode, $station.name, $station.sector.name]" object="$claimedship"/>
 
-            <set_value name="$title" exact="{20103, 1}"/>
-            <set_value name="$text" exact="{20103, 2}.[$claimedship.knownname, $claimedship.idcode, $station.name, $station.sector.name]"/>
-            <show_notification text="$title + '\n' + $text"/>
+            <do_if value="event.param3">
+              <set_value name="$title" exact="{20103, 1}"/>
+              <set_value name="$text" exact="{20103, 2}.[$claimedship.knownname, $claimedship.idcode, $station.name, $station.sector.name]"/>
+              <show_notification text="$title + '\n' + $text"/>
+            </do_if>
           </do_if>
           <do_else>
             <write_to_logbook category="general" title="{20103, 1}" text="{20103, 3}.[$claimedship.knownname, $claimedship.idcode]" object="$claimedship"/>
 
-            <set_value name="$title" exact="{20103, 1}"/>
-            <set_value name="$text" exact="{20103, 3}.[$claimedship.knownname, $claimedship.idcode]"/>
-            <show_notification text="$title + '\n' + $text"/>
+            <do_if value="event.param3">
+              <set_value name="$title" exact="{20103, 1}"/>
+              <set_value name="$text" exact="{20103, 3}.[$claimedship.knownname, $claimedship.idcode]"/>
+              <show_notification text="$title + '\n' + $text"/>
+            </do_if>
           </do_else>
         </do_if>
       </actions>

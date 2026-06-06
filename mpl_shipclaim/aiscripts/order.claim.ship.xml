@@ -1,0 +1,132 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aiscript name="order.claim.ship" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd" version="1">
+  <order id="ClaimShips" name="{20103,10}" description="{20103,11}" category="trade" infinite="true">
+    <params>
+      <param name="sectors" default="[this.sector]" type="list" text="{20103,12}" comment="{20103,13}">
+        <input_param name="type" value="'object'"/>
+        <input_param name="class" value="[class.sector]"/>
+      </param>
+      <param name="sendToWharf" type="bool" default="true" text="{20103,14}" comment="{20103,15}"/>
+      <param name="notifyOnClaim" type="bool" default="true" text="{20103,16}" comment="{20103,17}"/>
+      <param name="dockIfNoShips" type="bool" default="true" text="{20103,18}" comment="{20103,19}"/>
+    </params>
+    <skill min="60"/>
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true"/>
+      <match class="class.spacesuit" negate="true"/>
+    </requires>
+  </order>
+  
+  <interrupts>
+    <handler ref="SectorChangeHandler"/>
+    <handler ref="AttackHandler" />
+    <handler ref="MissileLockHandler" />
+    <handler ref="ScannedHandler" />
+    <handler ref="InspectedHandler"/>
+    <handler ref="ResupplyHandler" />
+    <handler ref="TargetInvalidHandler"/>
+    <handler ref="TideHandler"/>
+  </interrupts>
+
+  <attention min="unknown">
+    <actions>
+      <label name="start"/>
+
+      <set_value name="$pilotSkill" exact="this.assignedcontrolled.pilot.skill.piloting"/>
+      
+      <do_if value="not $sectors">
+        <resume label="finish"/>
+      </do_if>
+      
+      <find_ship_by_true_owner name="$claimableShip" space="$sectors" faction="faction.ownerless" sortbydistanceto="this.assignedcontrolled" checkoperational="true"  multiple="false"/>
+      <do_if value="$claimableShip">
+        <!-- Move to the target ship -->
+        <set_command command="command.move" param="$claimableShip"/>
+        <run_script name="'move.generic'" result="$movesuccess">
+          <param name="destination" value="$claimableShip"/>
+        </run_script>
+        
+        <do_if value="not $movesuccess">
+          <!-- Could not move to ship so restart process again -->
+          <resume label="restart"/>
+        </do_if>
+        
+        <do_if value="not this.assignedcontrolled.cansee.{$claimableShip}">
+          <!-- Cannot see ship after moving so restart -->
+          <resume label="restart"/>
+        </do_if>
+        
+        <do_if value="$claimableShip and $claimableShip.canbeclaimed">
+          <set_command command="command.investigate"/>
+          
+          <claim_ship target="$claimableShip" faction="faction.player"/>
+          
+          <set_object_name object="$claimableShip" name="'__' + $claimableShip.name"/>
+          
+          <do_if value="not $claimableShip.pilot.exists">
+            <create_control_entity object="$claimableShip" post="controlpost.aipilot">
+              <select race="race.argon" tags="tag.aipilot"/>
+              <owner exact="faction.player"/>
+            </create_control_entity>
+          </do_if>
+          
+          <signal_objects object="player.entity" param="'ClaimedShip'" param2="$claimableShip" param3="false" delay="10ms" comment="Signal MD listener to start/reset default scripts"/>
+
+          <write_to_logbook category="general" title="{20103, 1}" text="{20103, 4}.[this.assignedcontrolled.knownname, this.assignedcontrolled.idcode, $claimableShip.knownname, $claimableShip.idcode]"/>
+          
+          <do_if value="$sendToWharf">
+            <signal_objects object="player.entity" param="'SendToNearestDock'" param2="$claimableShip" param3="$notifyOnClaim" delay="5s" comment="Send ship to nearest safe dock"/>
+          </do_if>
+          <do_else>
+            <write_to_logbook category="general" title="{20103, 1}" text="{20103, 3}.[$claimableShip.knownname, $claimableShip.idcode]" object="$claimableShip"/>
+
+            <do_if value="$notifyOnClaim">
+              <set_value name="$title" exact="{20103, 1}"/>
+              <set_value name="$text" exact="{20103, 3}.[$claimableShip.knownname, $claimableShip.idcode]"/>
+              <show_notification text="$title + '\n' + $text"/>
+            </do_if>
+          </do_else>
+        </do_if>
+      </do_if>
+      <do_elseif value="not this.assignedcontrolled.dock and $dockIfNoShips">
+        <!-- Nothing to claim so dock at nearest safe station -->
+        <find_station name="$stations" space="player.galaxy" sortbydistanceto="this.assignedcontrolled" multiple="true">
+          <match knownto="this.assignedcontrolled.owner"/>
+          <match checkoperational="true"/>
+          <match mayattack="this.assignedcontrolled" negate="true"/>
+          <match_relation_to faction="this.assignedcontrolled.owner" comparison="ge" relation="neutral" />
+        </find_station>
+        
+        <do_for_each name="$stationinlist" in="$stations"> 
+          <!-- Ensure that the station is in a friendly sector -->
+          <do_if value="$stationinlist.sector.owner.hasrelation.dock.{this.assignedcontrolled.owner}">
+            <set_value name="$station" exact="$stationinlist" />
+            <break />
+          </do_if>
+        </do_for_each>
+        
+        <do_if value="$station">
+          <run_script name="'order.dock'">
+            <param name="destination" value="$station"/>
+            <param name="waittime" value="15s"/>
+          </run_script>
+        </do_if>
+      </do_elseif>
+      
+      <label name="restart"/>
+      
+      <set_command command="command.scan"/>
+      <set_command_action commandaction="commandaction.calculating"/>
+      
+      <set_value name="$minWait" exact="(16 - this.assignedcontrolled.pilot.skill.piloting)s"/>
+      <set_value name="$maxWait" exact="(35 - this.assignedcontrolled.pilot.skill.piloting)s"/>
+      <wait min="$minWait" max="$maxWait"/>
+      
+      <resume label="start"/>
+			
+      <label name="finish"/>
+
+      <set_order_syncpoint_reached order="this.ship.order"/>
+    </actions>
+  </attention>
+</aiscript>

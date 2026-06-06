@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<content name="MPL Ship Claim" id="mpl_shipclaim" author="Memia" version="1" date="2026-05-04">
+<content name="MPL Ship Claim" id="mpl_shipclaim" author="Memia" version="2" date="2026-06-06">
   <text language="44" name="MPL Ship Claim" description="Modifies ship claiming to allow you to claim abandoned ships from your ship"></text>
 </content>

@@ -4,5 +4,16 @@
     <t id="1">Ship Claimed</t>
     <t id="2">%1(ship name) \(%2\)(ship ID code) claimed and sent to %3(dock name) in %4(sector name).</t>
     <t id="3">%1(ship name) \(%2\)(ship ID code) claimed but no dock was found to send it to.</t>
+    <t id="4">%1(ship name) \(%2\)(ship ID code) claimed %3(claimed ship name) \(%4\)(claimed ship ID code).</t>
+    <t id="10">Claim Abandoned Ships</t>
+    <t id="11">Claims abandoned ships in designated sectors.</t>
+    <t id="12">Sectors</t>
+    <t id="13">Sectors to look for abandoned ships.</t>
+    <t id="14">Send to wharf?</t>
+    <t id="15">Automatically send claimed ship to nearest equipment dock, wharf, or shipyard as appropriate?</t>
+    <t id="16">Notify on claim?</t>
+    <t id="17">Send a notification to me when a ship is claimed?</t>
+    <t id="18">Dock when idle?</t>
+    <t id="19">Dock to the nearest safe station when nothing to do?</t>
   </page>
 </language>
