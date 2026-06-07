@@ -40,6 +40,11 @@
       
       <find_ship_by_true_owner name="$claimableShip" space="$sectors" faction="faction.ownerless" sortbydistanceto="this.assignedcontrolled" checkoperational="true"  multiple="false"/>
       <do_if value="$claimableShip">
+        <!-- Undock if currently docked -->
+        <do_if value="this.assignedcontrolled.dock">
+          <run_script name="'move.undock'" sinceversion="1"/>
+        </do_if>
+        
         <!-- Move to the target ship -->
         <set_command command="command.move" param="$claimableShip"/>
         <run_script name="'move.generic'" result="$movesuccess">
@@ -96,12 +101,19 @@
           <match mayattack="this.assignedcontrolled" negate="true"/>
           <match_relation_to faction="this.assignedcontrolled.owner" comparison="ge" relation="neutral" />
         </find_station>
-        
+
         <do_for_each name="$stationinlist" in="$stations"> 
           <!-- Ensure that the station is in a friendly sector -->
           <do_if value="$stationinlist.sector.owner.hasrelation.dock.{this.assignedcontrolled.owner}">
-            <set_value name="$station" exact="$stationinlist" />
-            <break />
+            <!-- Make sure the station has a free docking bay -->
+            <find_dockingbay object="$stationinlist" name="$dock">
+              <match_dock size="this.assignedcontrolled.docksize"/>
+            </find_dockingbay>
+            
+            <do_if value="$dock">
+              <set_value name="$station" exact="$stationinlist" />
+              <break />
+            </do_if>
           </do_if>
         </do_for_each>
         
@@ -118,8 +130,8 @@
       <set_command command="command.scan"/>
       <set_command_action commandaction="commandaction.calculating"/>
       
-      <set_value name="$minWait" exact="(16 - this.assignedcontrolled.pilot.skill.piloting)s"/>
-      <set_value name="$maxWait" exact="(35 - this.assignedcontrolled.pilot.skill.piloting)s"/>
+      <set_value name="$minWait" exact="([16 - this.assignedcontrolled.pilot.skill.piloting, 1].max)s"/>
+      <set_value name="$maxWait" exact="([35 - this.assignedcontrolled.pilot.skill.piloting, 1].max)s"/>
       <wait min="$minWait" max="$maxWait"/>
       
       <resume label="start"/>
