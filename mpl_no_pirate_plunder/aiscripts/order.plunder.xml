@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+	<add sel="/aiscript[@name='order.plunder']/attention[@min='unknown']/actions/do_if[@value='not $target']/find_station/match[@owner='this.trueowner']" pos="after">
+		<match owner="faction.player" negate="true"/>
+	</add>
+
+	<remove sel="/aiscript[@name='order.plunder']/attention[@min='unknown']/actions/do_if[@value='@$target.isoperational']/signal_objects['@object=$target' and '@param=halt' and '@param2=this.defensible' and '@param3=piratehalt']"/>
+
+	<add sel="/aiscript[@name='order.plunder']/attention[@min='unknown']/actions/remove_value[@name='$y']" pos="after">
+		<do_if value="@$target.isplayerowned">
+			<resume label="plunder"/>
+		</do_if>
+	</add>
+</diff>

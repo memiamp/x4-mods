@@ -20,6 +20,9 @@ Instantly sells both picked up ammo drops and cargo inventory when finished coll
 
 Set it as a repeat order for the ship to continually pickup drops in a single sector.
 
+## No Pirate Plunder(/mpl_no_pirate_plunder)
+Stops pirate ships from plundering any player ships.
+
 ## [Ship Claim](/mpl_shipclaim)
 Modifies the behaviour of claiming so it can be performed from a ship (instead of space suit) within 200m of the data leak.
 
