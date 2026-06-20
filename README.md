@@ -24,6 +24,10 @@ Set it as a repeat order for the ship to continually pickup drops in a single se
 Stops pirate ships from plundering any player ships.
 
 ## [Ship Claim](/mpl_shipclaim)
-Modifies the behaviour of claiming so it can be performed from a ship (instead of space suit) within 200m of the data leak.
+Improved player claiming of abandoned ships by:
+- Allowing the player to scan from their ship within 200m of data leak
+- Adds a new pilot to the claimed ship Automatically
+- Sends the ship to the nearest, safe equipment dock, wharf, or shipyard (as appropriate)
 
-Automatically adds a new pilot to the claimed ship, and then sends it to the nearest appropriate safe equipment dock, wharf, or shipyard.
+Also adds a new default order named 'Claim Abandoned Ships' for your ships that allows a ship to continually claim abandoned ships in designated sectors.
+As with the changes to player claiming, these automatically claimed ships will automatically get a new pilot and can (optionally) be sent to a safe, appropriate station.
