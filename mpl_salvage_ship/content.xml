@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content name="MPL Salvage Ship" id="mpl_salvage_ship" author="Memia" version="1" date="2026-06-30">
+  <text language="44" name="MPL Salvage Ship" description="Adds a command to salvage a ship at a player ship facility"></text>
+</content>

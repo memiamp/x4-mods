@@ -20,8 +20,24 @@ Instantly sells both picked up ammo drops and cargo inventory when finished coll
 
 Set it as a repeat order for the ship to continually pickup drops in a single sector.
 
-## No Pirate Plunder(/mpl_no_pirate_plunder)
+## [No Pirate Plunder](/mpl_no_pirate_plunder)
 Stops pirate ships from plundering any player ships.
+
+## [Salvage Ship](/mpl_salvage_ship)
+Adds a new action to salvage a selected ship at any player station that supports ship build operations (fabrication bay, maintenance bay, etc).
+
+Salvaging a ship explicitly salvages the raw materials used to make the ship and equipment (including deployables, drones, and ammunition), as well as salvaging its cargo, and the pilot's inventory items.
+
+The salvaging of the ship and equipment works by:
+- Salvaging 90% of the input materials where the player faction knows the blueprint for the equipment or ship being salvaged
+- Salvaging 60% of the input materials where the player faction does not know the blueprint
+
+The salvaged wares and cargo will be automatically added to the cargo storage on the station that executed the salvage operation.
+Where the salvaged wares would exceed the storage capacity, the remaining unsalvaged wares are converted to credits.
+
+Salvaged inventory items are automatically added to the player's inventory.
+
+Once a ship has been salvaged it is permanently removed from the game universe.
 
 ## [Ship Claim](/mpl_shipclaim)
 Improved player claiming of abandoned ships by:

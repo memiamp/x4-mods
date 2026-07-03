@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<language id="44">
+  <page id="20104">
+    <t id="1">Salvage Ship</t>
+    <t id="2">Salvage ship at </t>
+
+    <t id="11">%s \(%s\)</t>
+    <t id="12">WARNING: Pressing '{1001, 2821}' will immediately salvage the selected ship which is irreversible.</t>
+    
+    <t id="51">Salvage ship: %s</t>
+    <t id="52">Equipment Salvage</t>
+    <t id="53">Cargo Salvage</t>
+    <t id="54">Inventory Salvage</t>
+    <t id="55">BP owned</t>
+    <t id="56">BP unowned</t>
+    <t id="57">BP not found</t>
+    <t id="58">x %s</t>
+    <t id="59">Blueprint known, 90% recovery rate</t>
+    <t id="60">Blueprint not known, 60% recovery rate</t>
+    <t id="61">No bluepint found, credits salvaged only</t>
+    <t id="62">Salvaged credits</t>
+  </page>
+</language>

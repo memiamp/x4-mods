@@ -1,0 +1,364 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mdscript name="mpl_salvage_ship" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
+  <cues>
+    <cue name="mpl_salvage_ship_main">
+      <conditions>
+        <check_any>
+          <event_cue_signalled cue="md.Setup.GameStart"/>
+          <event_game_loaded/>
+        </check_any>
+      </conditions>
+      
+      <actions>
+        <!-- Salvage rate configuration -->
+        <set_value name="$blueprintKnownSalvageRate" exact="0.9f" comment="Percentage of raw materials salvaged when a blueprint is known by the player"/>
+        <set_value name="$blueprintUnknownSalvageRate" exact="0.6f" comment="Percentage of raw materials salvaged when a blueprint is unknown by the player"/>
+        <set_value name="$blueprintNotFoundCreditSalvageRate" exact="0.5f" comment="Percentage of equipment value credits salvaged when blueprint cannot be found"/>
+        <set_value name="$cargoSalvageRate" exact="1f" comment="Percentage of cargo salvaged"/>
+        <set_value name="$inventorySalvageRate" exact="1f" comment="Percentage of inventory salvaged"/>
+        
+        <set_value name="$debugChance" exact="100"/>
+        
+        <debug_text text="'MPL Salvage Ship: Initialised'" chance="$debugChance"/>
+      </actions>
+      
+      <cues>
+        <cue name="mpl_salvage_ship_get_actions" instantiate="true">
+          <conditions>
+            <event_cue_signalled cue="md.Interact_Menu_API.Get_Actions"/>
+          </conditions>
+          <actions>
+            <set_value name="$pricePercentage" exact="0.45f"/>
+            
+            <remove_value name="$salvageShip"/>
+            <remove_value name="$target"/>
+
+            <do_if value="typeof event.param.$selectedplayerships == datatype.list">
+              <do_if value="event.param.$selectedplayerships and event.param.$selectedplayerships.count == 1">
+                <set_value name="$salvageShip" exact="event.param.$selectedplayerships.{1}"/>
+                
+                <!-- Only player-owned facilities can salvage ships -->
+                <do_if value="event.param.$object.isplayerowned">
+                  <!-- Check facility supports building this ship class -->
+                  <do_if value="event.param.$object.canbuildclass.{$salvageShip.class}">
+                    <set_value name="$target" exact="event.param.$object"/>
+                    
+                    <debug_text text="'MPL Salvage Ship: Ship %s (%s) has salvage target %s (%s)'.[$salvageShip.knownname, $salvageShip.idcode, $target.knownname, $target.idcode]" chance="$debugChance"/>
+                  </do_if>
+                  <do_else>
+                    <debug_text text="'MPL Salvage Ship: Ship %s (%s) cannot salvage on target %s (%s) due to no build facility for ship class %s'.[$salvageShip.knownname, $salvageShip.idcode, $target.knownname,$target.idcode, $salvageShip.class]" chance="$debugChance"/>
+                  </do_else>
+                </do_if>
+                <do_else>
+                  <debug_text text="'MPL Salvage Ship: Ship %s (%s) cannot salvage on target %s (%s) as it is not owned by the player'.[$salvageShip.knownname, $salvageShip.idcode, $target.knownname, $target.idcode]" chance="$debugChance"/>
+                </do_else>
+              </do_if>
+              <do_else>
+                <debug_text text="'MPL Salvage Ship: Could not show Salvage Ship as %s ships selected'.[event.param.$selectedplayerships.count]" chance="$debugChance"/>
+              </do_else>
+            </do_if>
+
+            <do_if value="$salvageShip? and $target?">
+              <set_value name="$mouseOver" exact="'%s at %s (%s)'.[{20104, 2},$target.knownname,$target.idcode]"/>
+              
+              <signal_cue_instantly cue="md.Interact_Menu_API.Add_Action"
+                                    param="table[
+                                                 $callback  = mpl_salvage_ship_execute,
+                                                 $icon      = 'order_equip',
+                                                 $id        = 'salvage_ship_selected_orders',
+                                                 $mouseover = $mouseOver,
+                                                 $section   = 'selected_orders',
+                                                 $text      = {20104, 1}
+                                                ]"/>
+            </do_if>
+          </actions>
+        </cue>
+
+        <cue name="mpl_salvage_ship_execute" instantiate="true">
+          <conditions>
+            <event_cue_signalled/>
+          </conditions>
+          <actions>
+            <do_if value="$salvageShip? and $target?">
+              <set_value name="$salvageData" exact="table[
+                                                          $cargo = table[],
+                                                          $equipment = table[],
+                                                          $inventory = table[],
+                                                          $ship = table[],
+                                                          $source = $salvageShip,
+                                                          $target = $target
+                                                         ]"/>
+
+              <debug_text text="'MPL Salvage Ship: Calculating salvage values for ship %s (%s) on target %s (%s)'.[$salvageShip.knownname, $salvageShip.idcode, $target.knownname, $target.idcode]" chance="$debugChance"/>
+              
+              <!-- Ship salvage -->
+              <run_actions result="$shipSalvage" ref="md.mpl_salvage_ship.GetSalvageForWare">
+                <param name="debugChance" value="$debugChance"/>
+                <param name="salvageShip" value="$salvageShip"/>
+                <param name="ware" value="$salvageShip.macro.ware"/>
+              </run_actions>
+              
+              <do_if value="$shipSalvage != null">
+                <set_value name="$salvageData.$ship" exact="$shipSalvage"/>
+              </do_if>
+              <do_else>
+                <debug_text text="'MPL Salvage Ship: Salvage of ship %s (%s) could not be calculated'.[$salvageShip.knownname, $salvageShip.idcode]" chance="$debugChance"/>
+              </do_else>
+
+              <!-- Equipment loadout salvage -->
+              <do_for_each in="$salvageShip.loadout.wares.list" name="$ware">
+                <!-- Check if ware already exists - if so increase quantity -->
+                <do_if value="$salvageData.$equipment.{$ware}?">
+                  <set_value name="$existingQuantity" exact="$salvageData.$equipment.{$ware}.$quantity"/>
+                  <set_value name="$salvageData.$equipment.{$ware}.$quantity" exact="$existingQuantity + 1"/>
+                </do_if>
+                <do_else>
+                  <run_actions result="$wareSalvage" ref="md.mpl_salvage_ship.GetSalvageForWare">
+                    <param name="debugChance" value="$debugChance"/>
+                    <param name="salvageShip" value="$salvageShip"/>
+                    <param name="ware" value="$ware"/>
+                  </run_actions>
+                  
+                  <do_if value="$wareSalvage != null">
+                    <set_value name="$salvageData.$equipment.{$ware}" exact="$wareSalvage"/>
+                  </do_if>
+                  <do_else>
+                    <debug_text text="'MPL Salvage Ship: Salvage of loadout for ship %s (%s) could not be calculated'.[$salvageShip.knownname, $salvageShip.idcode]" chance="$debugChance"/>
+                  </do_else>
+                </do_else>
+              </do_for_each>
+              
+              <!-- Cargo salvage -->
+              <do_for_each in="$salvageShip.cargo.list" name="$ware">
+                <set_value name="$cargoAmount" exact="$salvageShip.cargo.{$ware}.count"/>
+                <set_value name="$recoveredAmount" exact="($cargoAmount * md.mpl_salvage_ship.mpl_salvage_ship_main.$cargoSalvageRate)i"/>
+                
+                <debug_text text="'MPL Salvage Ship: Salvaging %s items of cargo %s from %s maximum.'.[$recoveredAmount, $ware, $cargoAmount]" chance="$debugChance"/>
+                
+                <set_value name="$salvageData.$cargo.{$ware}" exact="$recoveredAmount"/>
+              </do_for_each>
+              
+              <!-- Inventory salvage -->
+              <do_if value="$salvageShip.pilot">
+                <do_for_each in="$salvageShip.pilot.inventory.list" name="$ware">
+                  <set_value name="$inventoryAmount" exact="$salvageShip.pilot.inventory.{$ware}.count"/>
+                  <set_value name="$recoveredAmount" exact="($inventoryAmount * md.mpl_salvage_ship.mpl_salvage_ship_main.$inventorySalvageRate)i"/>
+                  
+                  <debug_text text="'MPL Salvage Ship: Salvaging %s items of inventory item %s from %s maximum.'.[$recoveredAmount, $ware, $inventoryAmount]" chance="$debugChance"/>
+                  
+                  <set_value name="$salvageData.$inventory.{$ware}" exact="$recoveredAmount"/>
+                </do_for_each>
+              </do_if>
+              
+              <!-- Send the data to the UI -->
+              <set_value name="player.entity.$salvageShip" exact="table[$data=$salvageData]"/>
+              <raise_lua_event name="'mplss.start'"/>
+            </do_if>
+            <do_else>
+              <debug_text text="'MPL Salvage Ship: Execute action was called but variables are not set'" chance="$debugChance"/>
+            </do_else>
+          </actions>
+        </cue>
+
+        <cue name="mpl_salvage_ship_perform_salvage" instantiate="true">
+          <conditions>
+            <event_ui_triggered screen="'mplss_trigger'" control="'perform_salvage'"/>
+          </conditions>
+          <actions>
+            <do_if value="$salvageData != null">
+              <set_value name="$totalCredits" exact="0"/>
+              <set_value name="$waresTable" exact="table[]"/>
+              
+              <!-- Add ship salvage -->
+              <set_value name="$totalCredits" exact="$totalCredits + $salvageData.$ship.$credits"/>
+              <do_for_each name="$ware" valuename="$amount" in="$salvageData.$ship.$materials">
+                <do_if value="$waresTable.{$ware}?">
+                  <set_value name="$currentAmount" exact="$waresTable.{$ware}" />
+                </do_if>
+                <do_else>
+                  <set_value name="$currentAmount" exact="0" />
+                </do_else>
+                
+                <set_value name="$newAmount" exact="$currentAmount + $amount" />
+                
+                <set_value name="$waresTable.{$ware}" exact="$newAmount" />
+              </do_for_each>
+
+              <!-- Add equipment salvage -->
+              <do_for_each name="$equipmentWare" valuename="$equipmentItem" in="$salvageData.$equipment">
+                <set_value name="$totalCredits" exact="$totalCredits + $equipmentItem.$credits * $equipmentItem.$quantity"/>
+                
+                <do_for_each name="$ware" valuename="$amount" in="$equipmentItem.$materials">
+                  <do_if value="$waresTable.{$ware}?">
+                    <set_value name="$currentAmount" exact="$waresTable.{$ware}" />
+                  </do_if>
+                  <do_else>
+                    <set_value name="$currentAmount" exact="0" />
+                  </do_else>
+                  
+                  <set_value name="$newAmount" exact="$currentAmount + $amount * $equipmentItem.$quantity" />
+                  <set_value name="$waresTable.{$ware}" exact="$newAmount" />
+                </do_for_each>
+              </do_for_each>
+
+              <!-- Add cargo -->
+              <do_for_each name="$ware" valuename="$amount" in="$salvageData.$cargo">
+                <do_if value="$waresTable.{$ware}?">
+                  <set_value name="$currentAmount" exact="$waresTable.{$ware}" />
+                </do_if>
+                <do_else>
+                  <set_value name="$currentAmount" exact="0" />
+                </do_else>
+                
+                <set_value name="$newAmount" exact="$currentAmount + $amount" />
+                <set_value name="$waresTable.{$ware}" exact="$newAmount" />
+              </do_for_each>
+              
+              <!-- Process target ware list -->
+              <do_for_each name="$ware" valuename="$amount" in="$waresTable">
+                <debug_text text="'MPL Salvage Ship: Salvaging %s of %s'.[$amount, $ware]" chance="$debugChance"/>
+                
+                <add_cargo object="$salvageData.$target" ware="$ware" exact="$amount" result="$added"/>
+                
+                <!-- Where ware isn't accepted, add credit value instead -->
+                <do_if value="$added != $amount">
+                  <set_value name="$remainingAmount" exact="$amount - $added"/>
+                  <set_value name="$remainingWareCredits" exact="$remainingAmount * $ware.averageprice"/>
+                  
+                  <debug_text text="'MPL Salvage Ship: Could only salvage %s out of %s for %s. Adding credit value of remaining amount.'.[$added, $amount, $ware]" chance="$debugChance"/>
+                  
+                  <set_value name="$totalCredits" exact="$totalCredits + $remainingWareCredits"/>
+                </do_if>
+              </do_for_each>
+              
+              <!-- Add inventory items -->
+              <do_for_each name="$ware" valuename="$amount" in="$salvageData.$inventory">
+                <add_inventory entity="player.entity" ware="$ware" exact="$amount"/>
+                <remove_inventory entity="$salvageData.$source.pilot" ware="$ware" exact="$amount"/>
+              </do_for_each>
+              
+              <!-- Add credit balance -->
+              <do_if value="$totalCredits gt 0">
+                <debug_text text="'MPL Salvage Ship: Salvage credit amount of %s Cr added'.[$totalCredits]" chance="$debugChance"/>
+                <transfer_money from="faction.ownerless" to="faction.player" amount="$totalCredits"/>
+              </do_if>
+
+              <!-- Destroy the ship -->
+              <wait exact="1ms"/>
+              <destroy_object object="$salvageData.$source" explosion="false" />
+            </do_if>
+            <do_else>
+              <debug_text text="'MPL Salvage Ship: No salvage data was found to perform salvage on'" chance="$debugChance"/>
+            </do_else>
+          </actions>
+        </cue>
+      </cues>
+    </cue>
+
+    <library name="FindBlueprint" purpose="run_actions">
+      <params>
+        <param name="ware"/>
+        <param name="debugChance" default="0"/>
+      </params>
+      <actions>
+        <set_value name="$returnValue" exact="null"/>
+        
+        <do_if value="$ware != null">
+          <get_ware_definition result="$blueprints" flags="blueprint"/>
+          
+          <do_for_each in="$blueprints" name="$blueprint">
+            <do_if value="$blueprint == $ware">
+              <set_value name="$returnValue" exact="$blueprint"/>
+              <break/>
+            </do_if>
+          </do_for_each>
+        </do_if>
+        
+        <do_if value="$returnValue == null">
+          <debug_text text="'MPL Salvage Ship: Find Blueprint for %s failed'.[$ware]" chance="$debugChance"/>
+        </do_if>
+        <do_else>
+          <debug_text text="'MPL Salvage Ship: Find Blueprint for %s was successful'.[$ware]" chance="$debugChance"/>
+        </do_else>
+        
+        <return value="$returnValue"/>
+      </actions>
+    </library>
+
+    <library name="GetSalvageForWare" purpose="run_actions">
+      <params>
+        <param name="debugChance" default="0"/>
+        <param name="salvageShip"/>
+        <param name="ware"/>
+      </params>
+      <actions>
+        <set_value name="$returnValue" exact="table[
+                                                    $credits = 0,
+                                                    $materials = table[],
+                                                    $quantity = 1,
+                                                    $type = 0
+                                                   ]"/>
+        
+        <!-- Get multiplier quantity where it's not equipment -->
+        <do_if value="$ware.isammo">
+          <set_value name="$ammoQuantity" exact="$salvageShip.ammostorage.{$ware.objectmacro}.count"/>
+          <set_value name="$returnValue.$quantity" exact="$ammoQuantity"/>
+        </do_if>
+        
+        <do_if value="player.blueprints.{$ware}.any.exists">
+          <!-- Indicate player has blueprint -->
+          <set_value name="$returnValue.$type" exact="1"/>
+          
+          <debug_text text="'MPL Salvage Ship: Player has blueprint for ware %s. Recovering %s pc of raw material values.'.[$ware, md.mpl_salvage_ship.mpl_salvage_ship_main.$blueprintKnownSalvageRate * 100f]" chance="$debugChance"/>
+          
+          <!-- Go through each ware in blueprint -->
+          <do_for_each in="player.blueprints.{$ware}.any.resource.wares.list" name="$blueprintWare">
+            <set_value name="$blueprintAmount" exact="player.blueprints.{$ware}.any.resource.wares.{$blueprintWare}.count"/>
+            <set_value name="$recoveredAmount" exact="($blueprintAmount * md.mpl_salvage_ship.mpl_salvage_ship_main.$blueprintKnownSalvageRate)i"/>
+
+            <do_if value="$recoveredAmount gt 0">
+              <set_value name="$returnValue.$materials.{$blueprintWare}" exact="$recoveredAmount"/>
+            </do_if>
+          </do_for_each>
+        </do_if>
+        <do_else>
+          <!-- Player does not have blueprint so try to find  it -->
+          <run_actions result="$foundBlueprint" ref="md.mpl_salvage_ship.FindBlueprint">
+            <param name="ware" value="$ware"/>
+            <param name="debugChance" value="$debugChance"/>
+          </run_actions>
+          
+          <do_if value="$foundBlueprint != null">
+            <!-- Indicate non-player held blueprint being used for salvage -->
+            <set_value name="$returnValue.$type" exact="2"/>
+            
+            <debug_text text="'MPL Salvage Ship: Player does not have blueprint for ware %s but a blueprint exists. Recovering %s pc of raw material values.'.[$ware, md.mpl_salvage_ship.mpl_salvage_ship_main.$blueprintUnknownSalvageRate * 100f]" chance="$debugChance"/>
+            
+            <!-- Go through each ware in found blueprint -->
+            <do_for_each in="$foundBlueprint.resources.list" name="$blueprintWare">
+              <set_value name="$blueprintAmount" exact="$foundBlueprint.resources.{$blueprintWare}.count"/>
+              <set_value name="$recoveredAmount" exact="($blueprintAmount * md.mpl_salvage_ship.mpl_salvage_ship_main.$blueprintUnknownSalvageRate)i"/>
+
+              <do_if value="$recoveredAmount gt 0">
+                <set_value name="$returnValue.$materials.{$blueprintWare}" exact="$recoveredAmount"/>
+              </do_if>
+            </do_for_each>
+          </do_if>
+          <do_else>
+            <!-- Indicate blueprint could not be found - use cash recovery -->
+            <set_value name="$returnValue.$type" exact="3"/>
+            
+            <set_value name="$equipmentAmount" exact="$ware.averageprice"/>
+            <set_value name="$recoveredAmount" exact="((($equipmentAmount)f / 100 * md.mpl_salvage_ship.mpl_salvage_ship_main.$blueprintNotFoundCreditSalvageRate)i * 100)ct"/>
+
+            <debug_text text="'MPL Salvage Ship: Could not locate a blueprint for ware %s. Recovering %s pc of cash value (%s Cr).'.[$ware, md.mpl_salvage_ship.mpl_salvage_ship_main.$blueprintNotFoundCreditSalvageRate * 100f, $recoveredAmount]" chance="$debugChance"/>
+            
+            <set_value name="$returnValue.$credits" exact="$recoveredAmount"/>
+          </do_else>
+        </do_else>
+
+        <return value="$returnValue"/>
+      </actions>
+    </library>
+  </cues>
+</mdscript>
