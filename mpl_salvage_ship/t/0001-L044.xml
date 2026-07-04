@@ -4,20 +4,30 @@
     <t id="1">Salvage Ship</t>
     <t id="2">Salvage ship at </t>
 
-    <t id="11">%s \(%s\)</t>
+    <t id="11">%s(ship name) \(%s(ship ID code)\)</t>
     <t id="12">WARNING: Pressing '{1001, 2821}' will immediately salvage the selected ship which is irreversible.</t>
-    
-    <t id="51">Salvage ship: %s</t>
+
+    <t id="14">Ship Salvaged</t>
+    <t id="15">%s(station name) \(%s(station ID code)\) salvaged ship %s(ship name) \(%s(ship ID code)\).\n</t>
+    <t id="16">The following wares were salvaged:\n%1(ware list)\n</t>
+    <t id="17">A total of \033G%s(total value)\033XCr was salvaged.\n</t>
+    <t id="18">The following inventory items were salvaged:\n%s(inventory list)\n</t>
+    <t id="19">  \033B%s(ware name)\033X x\033C%s(ware amount)\033X\n</t>
+    <t id="20">  \033B%s(ware name)\033X x\033C%s(ware amount)\033X out of \033C%s(total ware amount)\033X \(\033G%s(added credits)\033XCr added\)\n</t>
+
+    <t id="51">Salvage ship: %s(ship title)</t>
     <t id="52">Equipment Salvage</t>
     <t id="53">Cargo Salvage</t>
     <t id="54">Inventory Salvage</t>
     <t id="55">BP owned</t>
     <t id="56">BP unowned</t>
     <t id="57">BP not found</t>
-    <t id="58">x %s</t>
-    <t id="59">Blueprint known, 90% recovery rate</t>
-    <t id="60">Blueprint not known, 60% recovery rate</t>
-    <t id="61">No bluepint found, credits salvaged only</t>
+    <t id="58">x %s(quantity)</t>
+    <t id="59">Blueprint known, %.0f%% recovery rate</t>
+    <t id="60">Blueprint not known, %.0f%% recovery rate</t>
+    <t id="61">No bluepint found, %.0f%% credit value salvaged</t>
     <t id="62">Salvaged credits</t>
+    <t id="63">Cargo salvaged at %.0f%% recovery rate</t>
+    <t id="64">Inventory salvaged at %.0f%% recovery rate</t>
   </page>
 </language>

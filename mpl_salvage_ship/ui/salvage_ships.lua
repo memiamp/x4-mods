@@ -1,6 +1,5 @@
 local ffi = require("ffi")
 local C = ffi.C
-local Lib = require("extensions.sn_mod_support_apis.lua_interface").Library
 
 local blackboardKey = "$salvageShip"
 local cargo = {}
@@ -9,31 +8,32 @@ local equipment = {}
 local fontSizeRow = 8
 local fontSizeSubRow = 8
 local inventory = {}
-local isDebug = true
+local isDebug = false
 local mapMenu
 local mplSalvageShips = {}
 local playerId = 0
+local rates = {}
 local ship = {}
 local shipId = 0
 local shipMacro = ""
 local stationId = 0
 
 local salvageTypeColourMapping = {
-  [1] = Helper.color.green,
-  [2] = Helper.color.red,
-  [3] = Helper.color.grey
+  Helper.color.green,
+  Helper.color.red,
+  Helper.color.grey
 }
 
 local salvageTypeNameMapping = {
-  [1] = ReadText(20104, 55),
-  [2] = ReadText(20104, 56),
-  [3] = ReadText(20104, 57)
+  ReadText(20104, 55),
+  ReadText(20104, 56),
+  ReadText(20104, 57)
 }
 
 local salvageTypeTooltipMapping = {
-  [1] = ReadText(20104, 59),
-  [2] = ReadText(20104, 60),
-  [3] = ReadText(20104, 61)
+  ReadText(20104, 59),
+  ReadText(20104, 60),
+  ReadText(20104, 61)
 }
 
 ---
@@ -48,22 +48,12 @@ function mplSalvageShips.callback(_, _)
 end
 
 ---
---- Outputs the contents of a table to the debug output
---- @param table table The table to be output
----
-function mplSalvageShips.debugTable(table)
-  if (isDebug) then
-    Lib.Print_Table(table)
-  end
-end
-
----
 --- Outputs the specified parameters to the debug output
 --- @param text string The data to output 
 ---
 function mplSalvageShips.debugText(text)
   if (isDebug) then
-    DebugError("mplss.lua: " .. text)
+    DebugError("MPL Salvage Ship (LUA): " .. text)
   end
 end
 
@@ -117,11 +107,13 @@ end
 --- @param data   table   The table of materials for the equipment item
 ---
 function mplSalvageShips.drawEquipmentItem(target, name, data)
+  local tooltip = string.format(salvageTypeTooltipMapping[data.type], rates[data.type])
+  
   local row = target:addRow(true)
   row[1]:setColSpan(2):createText(name, { fontsize = fontSizeRow })
   row[3]:createText(string.format(ReadText(20104, 58), data.quantity), { fontsize = fontSizeRow, halign = "right" })
-  row[4]:setColSpan(2):createText(salvageTypeNameMapping[data.type], { color = salvageTypeColourMapping[data.type], fontsize = fontSizeRow, halign = "right", mouseOverText = salvageTypeTooltipMapping[data.type] })
-  
+  row[4]:setColSpan(2):createText(salvageTypeNameMapping[data.type], { color = salvageTypeColourMapping[data.type], fontsize = fontSizeRow, halign = "right", mouseOverText = tooltip })
+
   if (data.type == 3) then
     row = target:addRow(nil)
     row[1]:createText("-", { fontsize = fontSizeSubRow })
@@ -215,8 +207,9 @@ end
 --- @param frame      table    The target frame to place the sub-header on
 --- @param text       string   The text to be drawn
 --- @param yPosition  integer  The y position to offset the header by
+--- @param tooltip    string   Any tooltip to be shown when hovering on the sub-header
 ---
-function mplSalvageShips.drawSubHeader(frame, text, yPosition)
+function mplSalvageShips.drawSubHeader(frame, text, yPosition, tooltip)
   local subHeaderTable = frame:addTable(1, { reserveScrollBar = false, tabOrder = 1, y = yPosition + Helper.borderSize })
   
   local row = subHeaderTable:addEmptyRow(height, Helper.standardTextHeight / 2)
@@ -224,6 +217,10 @@ function mplSalvageShips.drawSubHeader(frame, text, yPosition)
   row = subHeaderTable:addRow(nil)
   row[1]:createText(text, Helper.subHeaderTextProperties)
 
+  if (tooltip) then
+    row[1].properties.mouseOverText = tooltip
+  end
+  
   return subHeaderTable
 end
 
@@ -276,16 +273,16 @@ function mplSalvageShips.drawWindowContent(frame)
   
   -- Cargo salvage
   if next(cargo) then
-    nextTable = mplSalvageShips.drawSubHeader(frame, ReadText(20104, 53), yPosition)
+    nextTable = mplSalvageShips.drawSubHeader(frame, ReadText(20104, 53), yPosition, string.format(ReadText(20104, 63), rates[4]))
     yPosition = nextTable.properties.y + nextTable:getVisibleHeight()
-    
+      
     nextTable = mplSalvageShips.drawCargoTable(frame, yPosition)
     yPosition = nextTable.properties.y + nextTable:getVisibleHeight()
   end
   
    -- Inventory salvage
   if next(inventory) then
-    nextTable = mplSalvageShips.drawSubHeader(frame, ReadText(20104, 54), yPosition)
+    nextTable = mplSalvageShips.drawSubHeader(frame, ReadText(20104, 54), yPosition, string.format(ReadText(20104, 64), rates[5]))
     yPosition = nextTable.properties.y + nextTable:getVisibleHeight()
     
     nextTable = mplSalvageShips.drawInventoryTable(frame, yPosition)
@@ -303,10 +300,10 @@ end
 function mplSalvageShips.drawWindowContentButtons(frame, yPosition)
   local buttonTableTopMargin = 40
   local buttonTable = frame:addTable(5, { tabOrder = 3, x = Helper.borderSize, y = yPosition + buttonTableTopMargin, reserveScrollBar = false })
-  buttonTable:setColWidth(1, 2)
+  buttonTable:setColWidth(1, 1)
   buttonTable:setColWidthPercent(3, 25)
   buttonTable:setColWidthPercent(4, 25)
-  buttonTable:setColWidth(5, 2)
+  buttonTable:setColWidth(5, 1)
 
   row = buttonTable:addRow(nil)
   row[2]:setColSpan(3):createText(ReadText(20104, 12), { color = Helper.color.red, halign = "center", wordwrap = true })
@@ -350,6 +347,14 @@ function mplSalvageShips.loadData()
   inventory = salvageData.inventory
   ship = salvageData.ship
   shipMacro = GetComponentData(shipId, "macro")
+
+  rates = {
+    salvageData.rates.salvageRateKnown * 100,
+    salvageData.rates.salvageRateUnknown * 100,
+    salvageData.rates.salvageRateCredit * 100,
+    salvageData.rates.salvageRateCargo * 100,
+    salvageData.rates.salvageRateInventory * 100
+  }
 
   -- Remove existing blackboard
   SetNPCBlackboard(playerId, blackboardKey, nil)

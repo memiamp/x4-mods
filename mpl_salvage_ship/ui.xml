@@ -3,6 +3,5 @@
   <environment type="menus">
     <file name="ui/salvage_ships.lua" />
     <dependency name="ego_detailmonitor" />
-    <dependency name="kuertee_ui_extensions" />
   </environment>
 </addon>

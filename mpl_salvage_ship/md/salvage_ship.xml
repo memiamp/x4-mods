@@ -17,7 +17,7 @@
         <set_value name="$cargoSalvageRate" exact="1f" comment="Percentage of cargo salvaged"/>
         <set_value name="$inventorySalvageRate" exact="1f" comment="Percentage of inventory salvaged"/>
         
-        <set_value name="$debugChance" exact="100"/>
+        <set_value name="$debugChance" exact="0"/>
         
         <debug_text text="'MPL Salvage Ship: Initialised'" chance="$debugChance"/>
       </actions>
@@ -84,6 +84,13 @@
                                                           $cargo = table[],
                                                           $equipment = table[],
                                                           $inventory = table[],
+                                                          $rates = table[
+                                                                         $salvageRateCargo = $cargoSalvageRate,
+                                                                         $salvageRateCredit = $blueprintNotFoundCreditSalvageRate,
+                                                                         $salvageRateInventory = $inventorySalvageRate,
+                                                                         $salvageRateKnown = $blueprintKnownSalvageRate,
+                                                                         $salvageRateUnknown = $blueprintUnknownSalvageRate
+                                                                        ],
                                                           $ship = table[],
                                                           $source = $salvageShip,
                                                           $target = $target
@@ -215,6 +222,7 @@
               </do_for_each>
               
               <!-- Process target ware list -->
+              <set_value name="$wareMessage" exact="''"/>
               <do_for_each name="$ware" valuename="$amount" in="$waresTable">
                 <debug_text text="'MPL Salvage Ship: Salvaging %s of %s'.[$amount, $ware]" chance="$debugChance"/>
                 
@@ -228,24 +236,51 @@
                   <debug_text text="'MPL Salvage Ship: Could only salvage %s out of %s for %s. Adding credit value of remaining amount.'.[$added, $amount, $ware]" chance="$debugChance"/>
                   
                   <set_value name="$totalCredits" exact="$totalCredits + $remainingWareCredits"/>
+                  
+                  <set_value name="$wareMessage" exact="$wareMessage + {20104, 20}.[$ware.name, $added, $amount, $remainingWareCredits.formatted.default]"/>
                 </do_if>
+                <do_else>
+                  <set_value name="$wareMessage" exact="$wareMessage + {20104, 19}.[$ware.name, $amount]"/>
+                </do_else>
               </do_for_each>
               
               <!-- Add inventory items -->
+              <set_value name="$inventoryMessage" exact="''"/>
               <do_for_each name="$ware" valuename="$amount" in="$salvageData.$inventory">
                 <add_inventory entity="player.entity" ware="$ware" exact="$amount"/>
                 <remove_inventory entity="$salvageData.$source.pilot" ware="$ware" exact="$amount"/>
+
+                <set_value name="$inventoryMessage" exact="$inventoryMessage + {20104, 19}.[$ware.name, $amount]"/>
               </do_for_each>
               
               <!-- Add credit balance -->
+              <set_value name="$creditMessage" exact="''"/>
               <do_if value="$totalCredits gt 0">
                 <debug_text text="'MPL Salvage Ship: Salvage credit amount of %s Cr added'.[$totalCredits]" chance="$debugChance"/>
                 <transfer_money from="faction.ownerless" to="faction.player" amount="$totalCredits"/>
+
+                <set_value name="$creditMessage" exact="{20104, 17}.[$totalCredits.formatted.default]"/>
               </do_if>
 
               <!-- Destroy the ship -->
-              <wait exact="1ms"/>
               <destroy_object object="$salvageData.$source" explosion="false" />
+              
+              <!-- Add details of salvage to logbook -->
+              <set_value name="$message" exact="{20104, 15}.[$salvageData.$target.name, $salvageData.$target.idcode, $salvageData.$source.name, $salvageData.$source.idcode]"/>
+              
+              <do_if value="$wareMessage != ''">
+                <set_value name="$message" exact="$message + {20104, 16}.[$wareMessage]"/>
+              </do_if>
+              
+              <do_if value="$inventoryMessage != ''">
+                <set_value name="$message" exact="$message + {20104, 18}.[$inventoryMessage]"/>
+              </do_if>
+              
+              <do_if value="$creditMessage != ''">
+                <set_value name="$message" exact="$message + $creditMessage"/>
+              </do_if>
+              
+              <write_to_logbook category="general" title="{20104, 14}" text="$message"/>
             </do_if>
             <do_else>
               <debug_text text="'MPL Salvage Ship: No salvage data was found to perform salvage on'" chance="$debugChance"/>
