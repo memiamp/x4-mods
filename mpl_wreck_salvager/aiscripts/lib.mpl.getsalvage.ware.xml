@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aiscript name="lib.mpl.getsalvage.ware" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd" version="1">
+  <params>
+    <param name="debugChance" type="bool" default="false"/>
+    <param name="salvageRateCredit" type="number" default="0"/>
+    <param name="salvageRateKnown" type="number" default="0"/>
+    <param name="salvageRateUnknown" type="number" default="0"/>
+    <param name="target" type="objet" required="true" comment="The target ship that is being salvaged"/>
+    <param name="ware" type="ware" required="true" comment="The ware that is being salvaged, for which a blueprint will be located"/>
+  </params>
+  <attention min="unknown">
+    <actions>
+      <set_value name="$returnValue" exact="table[
+                                                  $credits = 0,
+                                                  $materials = table[],
+                                                  $quantity = 1,
+                                                  $type = 0
+                                                 ]"/>
+
+      <do_if value="$target.iswreck">
+        <!-- Find matching ships for the same faction for calculating average ammo -->
+        <find_ship_by_true_owner name="$matchingShips" space="player.galaxy" macro="$target.macro" faction="$target.owner" checkoperational="true" multiple="true"/>
+      </do_if>
+      <do_else>
+        <set_value name="$matchingShips" exact="[$target]"/>
+      </do_else>
+
+      <!-- Get multiplier quantity where it's not equipment -->
+      <do_if value="$ware.isammo">
+        <set_value name="$totalAmmo" exact="0"/>
+        
+        <!-- This calculates an average of other matching ships which allows salvage of wrecks -->
+        <do_for_each in="$matchingShips" name="$matchingShip">
+          <set_value name="$totalAmmo" exact="$totalAmmo + $matchingShip.ammostorage.{$ware.objectmacro}.count"/>
+        </do_for_each>
+
+        <set_value name="$ammoQuantity" exact="($totalAmmo / $matchingShips.count)i"/>
+        <do_if value="$ammoQuantity le 0">
+          <set_value name="$ammoQuantity" exact="1"/>
+        </do_if>
+
+        <set_value name="$returnValue.$quantity" exact="$ammoQuantity"/>
+      </do_if>
+        
+      <do_if value="player.blueprints.{$ware}.any.exists">
+        <!-- Indicate player has blueprint -->
+        <set_value name="$returnValue.$type" exact="1"/>
+          
+        <debug_text text="'MPL Get Salvage for Ware: Player has blueprint for ware %s. Recovering %s pc of raw material values.'.[$ware, $salvageRateKnown * 100f]" chance="$debugChance"/>
+          
+        <!-- Go through each ware in blueprint -->
+        <do_for_each in="player.blueprints.{$ware}.any.resource.wares.list" name="$blueprintWare">
+          <set_value name="$blueprintAmount" exact="player.blueprints.{$ware}.any.resource.wares.{$blueprintWare}.count"/>
+          <set_value name="$recoveredAmount" exact="($blueprintAmount * $salvageRateKnown)i"/>
+
+          <do_if value="$recoveredAmount gt 0">
+            <set_value name="$returnValue.$materials.{$blueprintWare}" exact="$recoveredAmount"/>
+          </do_if>
+        </do_for_each>
+      </do_if>
+      <do_else>
+        <!-- Player does not have blueprint so try to find  it -->
+        <run_script name="'lib.mpl.find.blueprint'" result="$foundBlueprint">
+          <param name="ware" value="$ware"/>
+          <param name="debugChance" value="$debugChance"/>
+        </run_script>
+          
+        <do_if value="$foundBlueprint != null">
+          <!-- Indicate non-player held blueprint being used for salvage -->
+          <set_value name="$returnValue.$type" exact="2"/>
+            
+          <debug_text text="'MPL Get Salvage for Ware: Player does not have blueprint for ware %s but a blueprint exists. Recovering %s pc of raw material values.'.[$ware, $salvageRateUnknown * 100f]" chance="$debugChance"/>
+            
+          <!-- Go through each ware in found blueprint -->
+          <do_for_each in="$foundBlueprint.resources.list" name="$blueprintWare">
+            <set_value name="$blueprintAmount" exact="$foundBlueprint.resources.{$blueprintWare}.count"/>
+            <set_value name="$recoveredAmount" exact="($blueprintAmount * $salvageRateUnknown)i"/>
+
+            <!-- Adjust to 1 if nothing was recovered and the blueprint amount is at least 2 -->
+            <do_if value="$recoveredAmount == 0 and $blueprintAmount ge 2">
+              <set_value name="$recoveredAmount" exact="1"/>
+            </do_if>
+            
+            <do_if value="$recoveredAmount gt 0">
+              <set_value name="$returnValue.$materials.{$blueprintWare}" exact="$recoveredAmount"/>
+            </do_if>
+          </do_for_each>
+        </do_if>
+        <do_else>
+          <!-- Indicate blueprint could not be found - use cash recovery -->
+          <set_value name="$returnValue.$type" exact="3"/>
+            
+          <set_value name="$equipmentAmount" exact="$ware.averageprice"/>
+          <set_value name="$recoveredAmount" exact="((($equipmentAmount)f / 100 * $salvageRateCredit)i * 100)ct"/>
+
+          <debug_text text="'MPL Get Salvage for Ware: Could not locate a blueprint for ware %s. Recovering %s pc of cash value (%s Cr).'.[$ware, $salvageRateCredit * 100f, $recoveredAmount]" chance="$debugChance"/>
+            
+          <set_value name="$returnValue.$credits" exact="$recoveredAmount"/>
+        </do_else>
+      </do_else>
+
+      <return value="$returnValue"/>
+    </actions>
+  </attention>
+</aiscript>

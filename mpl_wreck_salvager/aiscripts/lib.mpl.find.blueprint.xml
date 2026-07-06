@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aiscript name="lib.mpl.find.blueprint" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd" version="1">
+  <params>
+    <param name="debugChance" type="bool" default="false"/>
+    <param name="ware" type="ware" required="true" comment="The ware that is being salvaged, for which a blueprint will be located"/>
+  </params>
+  <attention min="unknown">
+    <actions>
+      <set_value name="$returnValue" exact="null"/>
+
+      <do_if value="$ware != null">
+        <get_ware_definition result="$blueprints" flags="blueprint"/>
+
+        <do_for_each in="$blueprints" name="$blueprint">
+          <do_if value="$blueprint == $ware">
+            <set_value name="$returnValue" exact="$blueprint"/>
+            <break/>
+          </do_if>
+        </do_for_each>
+      </do_if>
+
+      <do_if value="$returnValue == null">
+        <debug_text text="'MPL Find Blueprint: Find Blueprint for %s failed'.[$ware]" chance="$debugChance"/>
+      </do_if>
+      <do_else>
+        <debug_text text="'MPL Find Blueprint: Find Blueprint for %s was successful'.[$ware]" chance="$debugChance"/>
+      </do_else>
+
+      <return value="$returnValue"/>
+    </actions>
+  </attention>
+</aiscript>

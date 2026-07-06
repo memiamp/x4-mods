@@ -47,3 +47,15 @@ Improved player claiming of abandoned ships by:
 
 Also adds a new default order named 'Claim Abandoned Ships' for your ships that allows a ship to continually claim abandoned ships in designated sectors.
 As with the changes to player claiming, these automatically claimed ships will automatically get a new pilot and can (optionally) be sent to a safe, appropriate station.
+
+## [Wreck Salvager](/mpl_wreck_salvager)
+Adds a new order to salvage wrecks in designated sectors to recover a small portion of their blueprint wares and send them to a designated player station.
+
+The designated ship will salvage wrecks until there are none remaining in the designated sectors, in which case they will dock at a friendly station.
+
+The salvaging of the ship and equipment works by:
+- Salvaging 20% of the input materials where the player faction knows the blueprint for the equipment or ship being salvaged
+- Salvaging 10% of the input materials where the player faction does not know the blueprint
+
+The salvaged wares and cargo will be automatically added to the cargo storage on the target station for the Wreck Salvager.
+Where the salvaged wares would exceed the storage capacity, the remaining unsalvaged wares are converted to credits.

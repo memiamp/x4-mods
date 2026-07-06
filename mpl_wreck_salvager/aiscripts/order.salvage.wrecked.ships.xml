@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aiscript name="order.salvage.wrecked.ships" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd" version="1">
+  <order id="salvage_wrecked_ships" name="{20105,1}" description="{20105,2}" category="trade" infinite="true">
+    <params>
+      <param name="sectors" default="[this.sector]" type="list" text="{20105,3}" comment="{20105,4}">
+        <input_param name="type" value="'object'"/>
+        <input_param name="class" value="[class.sector]"/>
+      </param>
+      <param name="target" type="object" text="{20105,5}" comment="{20105,6}">
+        <input_param name="class" value="[class.station]"/>
+        <input_param name="owner" value="this.object.owner"/>
+      </param>
+      <param name="notifyOnSalvage" type="bool" default="true" text="{20105,7}" comment="{20105,8}"/>
+      <param name="dockOnIdle" type="bool" default="true" text="{20105,9}" comment="{20105,10}"/>
+      <param name="salvageRateCargo" type="internal" default="0.15f" comment="Savlage rate for cargo"/>
+      <param name="salvageRateCredit" type="internal" default="0.3f" comment="Savlage rate for credit value of equipment without a blueprint"/>
+      <param name="salvageRateKnown" type="internal" default="0.2f" comment="Salvage rate for equipment with a player-owned blueprint"/>
+      <param name="salvageRateUnknown" type="internal" default="0.1f" comment="Savlage rate for equipment without a player-owned blueprint"/>
+      <param name="debugChance" type="internal" default="0" comment="Output debug information to log"/>
+    </params>
+    <skill min="80"/>
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true"/>
+      <match class="class.spacesuit" negate="true"/>
+    </requires>
+  </order>
+  
+  <interrupts>
+    <handler ref="SectorChangeHandler"/>
+    <handler ref="AttackHandler"/>
+    <handler ref="MissileLockHandler"/>
+    <handler ref="ScannedHandler"/>
+    <handler ref="InspectedHandler"/>
+    <handler ref="ResupplyHandler"/>
+    <handler ref="TargetInvalidHandler"/>
+    <handler ref="TideHandler"/>
+  </interrupts>
+
+  <attention min="unknown">
+    <actions>
+      <label name="start"/>
+
+      <wait exact="1ms"/>
+      
+      <do_if value="not $sectors or not $target">
+        <resume label="finish"/>
+      </do_if>
+
+      <find_ship name="$wreckedShip" space="$sectors" sortbydistanceto="this.assignedcontrolled" checkoperational="false" state="componentstate.wreck" multiple="false"/>
+      
+      <do_if value="$wreckedShip and $wreckedShip.iswreck">
+        <!-- Undock if currently docked -->
+        <do_if value="this.assignedcontrolled.dock">
+          <run_script name="'move.undock'"/>
+        </do_if>
+        
+        <!-- Move to the target ship -->
+        <set_command command="command.move" param="$wreckedShip"/>
+        <run_script name="'move.generic'" result="$movesuccess">
+          <param name="allowwreck" value="true"/>
+          <param name="destination" value="$wreckedShip"/>
+          <param name="debugchance" value="100"/>
+        </run_script>
+        
+        <do_if value="not $movesuccess">
+          <!-- Could not move to ship so restart process again -->
+          <resume label="restart"/>
+        </do_if>
+        
+        <do_if value="not this.assignedcontrolled.cansee.{$wreckedShip}">
+          <!-- Cannot see ship after moving so restart -->
+          <resume label="restart"/>
+        </do_if>
+        
+        <do_if value="$wreckedShip">
+          <set_command command="command.recycle"/>
+
+          <set_value name="$totalCredits" exact="0"/>
+          <set_value name="$waresTable" exact="table[]"/>
+
+          <!-- Salvage ship -->
+          <debug_text text="'MPL Salvage Wrecks Order: Calculating salvage values for ship %s (%s) on target %s (%s)'.[$wreckedShip.knownname, $wreckedShip.idcode, $target.knownname, $target.idcode]" chance="$debugChance"/>
+
+          <!-- Ship salvage -->
+          <run_script name="'lib.mpl.getsalvage.ware'" result="$shipSalvage">
+            <param name="debugChance" value="$debugChance"/>
+            <param name="salvageRateCredit" value="$salvageRateCredit"/>
+            <param name="salvageRateKnown" value="$salvageRateKnown"/>
+            <param name="salvageRateUnknown" value="$salvageRateUnknown"/>
+            <param name="target" value="$wreckedShip"/>
+            <param name="ware" value="$wreckedShip.macro.ware"/>
+          </run_script>
+
+          <do_if value="$shipSalvage != null">
+            <!-- Add ship salvage -->
+            <set_value name="$totalCredits" exact="$totalCredits + $shipSalvage.$credits"/>
+            <do_for_each name="$ware" valuename="$amount" in="$shipSalvage.$materials">
+              <do_if value="$waresTable.{$ware}?">
+                <set_value name="$currentAmount" exact="$waresTable.{$ware}"/>
+              </do_if>
+              <do_else>
+                <set_value name="$currentAmount" exact="0"/>
+              </do_else>
+              
+              <set_value name="$newAmount" exact="$currentAmount + $amount"/>
+
+              <set_value name="$waresTable.{$ware}" exact="$newAmount"/>
+            </do_for_each>
+          </do_if>
+          <do_else>
+            <debug_text text="'MPL Salvage Wrecks Order: Salvage of ship %s (%s) could not be calculated'.[$wreckedShip.knownname, $wreckedShip.idcode]" chance="$debugChance"/>
+          </do_else>
+
+          <!-- Equipment loadout salvage -->
+          <do_for_each in="$wreckedShip.loadout.wares.list" name="$loadoutWare">
+            <run_script name="'lib.mpl.getsalvage.ware'" result="$wareSalvage">
+              <param name="debugChance" value="$debugChance"/>
+              <param name="salvageRateCredit" value="$salvageRateCredit"/>
+              <param name="salvageRateKnown" value="$salvageRateKnown"/>
+              <param name="salvageRateUnknown" value="$salvageRateUnknown"/>
+              <param name="target" value="$wreckedShip"/>
+              <param name="ware" value="$loadoutWare"/>
+            </run_script>
+
+            <do_if value="$wareSalvage != null">
+              <!-- Add equipment salvage -->
+              <set_value name="$totalCredits" exact="$totalCredits + $wareSalvage.$credits * $wareSalvage.$quantity"/>
+              
+              <do_for_each name="$ware" valuename="$amount" in="$wareSalvage.$materials">
+                <do_if value="$waresTable.{$ware}?">
+                  <set_value name="$currentAmount" exact="$waresTable.{$ware}"/>
+                </do_if>
+                <do_else>
+                  <set_value name="$currentAmount" exact="0"/>
+                </do_else>
+                
+                <set_value name="$newAmount" exact="$currentAmount + $amount * $wareSalvage.$quantity"/>
+                <set_value name="$waresTable.{$ware}" exact="$newAmount"/>
+              </do_for_each>
+            </do_if>
+            <do_else>
+              <debug_text text="'MPL Salvage Wrecks Order: Salvage of loadout for ship %s (%s) could not be calculated'.[$wreckedShip.knownname, $wreckedShip.idcode]" chance="$debugChance"/>
+            </do_else>
+          </do_for_each>
+
+          <!-- Cargo salvage -->
+<!--
+          <do_for_each in="$wreckedShip.cargo.list" name="$ware">
+            <set_value name="$cargoAmount" exact="$wreckedShip.cargo.{$ware}.count"/>
+            <set_value name="$recoveredAmount" exact="($cargoAmount * $salvageRateCargo)i"/>
+            
+            <debug_text text="'MPL Salvage Wrecks Order: Salvaging %s items of cargo %s from %s maximum.'.[$recoveredAmount, $ware, $cargoAmount]" chance="$debugChance"/>
+-->
+          <!-- Add cargo -->
+<!--
+            <do_if value="$waresTable.{$ware}?">
+              <set_value name="$currentAmount" exact="$waresTable.{$ware}"/>
+            </do_if>
+            <do_else>
+              <set_value name="$currentAmount" exact="0"/>
+            </do_else>
+            
+            <set_value name="$newAmount" exact="$currentAmount + $amount"/>
+            <debug_text text="'MPL Salvage Wrecks Order: Wrecked ship %s (%s) CARGO WARE %s Set from %s to %s'.[$wreckedShip.knownname, $wreckedShip.idcode, $ware, $currentAmount, $newAmount]" chance="$debugChance"/>
+            <set_value name="$waresTable.{$ware}" exact="$newAmount"/>
+          </do_for_each>
+-->
+          <!-- Process target ware list -->
+          <set_value name="$wareMessage" exact="''"/>
+          <do_for_each name="$ware" valuename="$amount" in="$waresTable">
+            <debug_text text="'MPL Salvage Wrecks Order: Salvaging %s of %s'.[$amount, $ware]" chance="$debugChance"/>
+                
+            <add_cargo object="$target" ware="$ware" exact="$amount" result="$added"/>
+            
+            <!-- Where ware isn't accepted, add credit value instead -->
+            <do_if value="$added != $amount">
+              <set_value name="$remainingAmount" exact="$amount - $added"/>
+              <set_value name="$remainingWareCredits" exact="$remainingAmount * $ware.averageprice"/>
+
+              <debug_text text="'MPL Salvage Wrecks Order: Could only salvage %s out of %s for %s. Adding credit value of remaining amount.'.[$added, $amount, $ware]" chance="$debugChance"/>
+
+              <set_value name="$totalCredits" exact="$totalCredits + $remainingWareCredits"/>
+                  
+              <set_value name="$wareMessage" exact="$wareMessage + {20105, 27}.[$ware.name, $added, $amount, $remainingWareCredits.formatted.default]"/>
+            </do_if>
+            <do_else>
+              <set_value name="$wareMessage" exact="$wareMessage + {20105, 26}.[$ware.name, $amount]"/>
+            </do_else>
+          </do_for_each>
+              
+          <!-- Add credit balance -->
+          <set_value name="$creditMessage" exact="''"/>
+          <do_if value="$totalCredits gt 0">
+            <debug_text text="'MPL Salvage Wrecks Order: Salvage credit amount of %s Cr added'.[$totalCredits]" chance="$debugChance"/>
+            <transfer_money from="faction.ownerless" to="faction.player" amount="$totalCredits"/>
+
+            <set_value name="$creditMessage" exact="{20105, 25}.[$totalCredits.formatted.default]"/>
+          </do_if>
+
+          <!-- Add details of salvage to logbook -->
+          <set_value name="$message" exact="{20105, 22}.[$wreckedShip.knownname, $wreckedShip.idcode, $wreckedShip.sector.name, $target.knownname, $target.idcode]"/>
+          
+          <do_if value="$wareMessage != ''">
+            <set_value name="$message" exact="$message + {20105, 24}.[$wareMessage]"/>
+          </do_if>
+          
+          <do_if value="$creditMessage != ''">
+            <set_value name="$message" exact="$message + $creditMessage"/>
+          </do_if>
+          
+          <write_to_logbook category="general" title="{20105, 21}" text="$message"/>
+          
+          <set_value name="$salvageMessage" exact="{20105,23}.[this.assignedcontrolled.knownname, this.assignedcontrolled.idcode, $wreckedShip.knownname, $wreckedShip.idcode]"/>
+          <write_to_logbook category="general" title="{20105, 21}" text="$salvageMessage" object="$wreckedShip"/>
+          <do_if value="$notifyOnSalvage">
+            <set_value name="$title" exact="{20105,21}"/>
+            <show_notification text="$title + '\n' + $salvageMessage"/>
+          </do_if>
+          
+          <!-- Destroy the wreck -->
+          <destroy_object object="$wreckedShip" explosion="false"/>
+        </do_if>
+      </do_if>
+      <do_elseif value="not this.assignedcontrolled.dock and $dockOnIdle">
+        <!-- Nothing to salvage so dock at nearest safe station -->
+        <find_station name="$stations" space="player.galaxy" sortbydistanceto="this.assignedcontrolled" multiple="true">
+          <match knownto="this.assignedcontrolled.owner"/>
+          <match checkoperational="true"/>
+          <match mayattack="this.assignedcontrolled" negate="true"/>
+          <match_relation_to faction="this.assignedcontrolled.owner" comparison="ge" relation="neutral"/>
+        </find_station>
+
+        <do_for_each name="$stationinlist" in="$stations">
+          <!-- Ensure that the station is in a friendly sector -->
+          <do_if value="$stationinlist.sector.owner.hasrelation.dock.{this.assignedcontrolled.owner}">
+            <!-- Make sure the station has a free docking bay -->
+            <find_dockingbay object="$stationinlist" name="$dock">
+              <match_dock size="this.assignedcontrolled.docksize"/>
+            </find_dockingbay>
+            
+            <do_if value="$dock">
+              <set_value name="$station" exact="$stationinlist"/>
+              <break/>
+            </do_if>
+          </do_if>
+        </do_for_each>
+        
+        <do_if value="$station">
+          <run_script name="'order.dock'">
+            <param name="destination" value="$station"/>
+            <param name="waittime" value="15s"/>
+          </run_script>
+        </do_if>
+      </do_elseif>
+      
+      <label name="restart"/>
+      
+      <set_command command="command.scan"/>
+      <set_command_action commandaction="commandaction.calculating"/>
+      
+      <set_value name="$minWait" exact="([16 - this.assignedcontrolled.pilot.skill.piloting, 1].max)s"/>
+      <set_value name="$maxWait" exact="([35 - this.assignedcontrolled.pilot.skill.piloting, 1].max)s"/>
+      <wait min="$minWait" max="$maxWait"/>
+      
+      <resume label="start"/>
+			
+      <label name="finish"/>
+
+      <set_order_syncpoint_reached order="this.assignedcontrolled.order"/>
+    </actions>
+  </attention>
+</aiscript>

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content name="MPL Wreck Salvager" id="mpl_wreck_salvager" author="Memia" version="2" date="2026-07-05">
+  <text language="44" name="MPL Wreck Salvager" description="Adds a new repeat order to instruct a ship to salvage wrecks in designated sectors"></text>
+</content>
