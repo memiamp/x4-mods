@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE icons SYSTEM "icons.dtd" >
 <icons>
-    <icon name="order_salvage_wrecked_ships" texture="extensions\mpl_shipclaim\assets\fx\gui\textures\order\order_salvage_wrecked_ships.tga" height="32" width="32"></icon>
+    <icon name="order_salvagewreckedships" texture="extensions\mpl_wreck_salvager\assets\fx\gui\textures\order\order_salvagewreckedships.tga" height="32" width="32"></icon>
+    <icon name="order_salvagewreckedstations" texture="extensions\mpl_wreck_salvager\assets\fx\gui\textures\order\order_salvagewreckedstations.tga" height="32" width="32"></icon>
 </icons>

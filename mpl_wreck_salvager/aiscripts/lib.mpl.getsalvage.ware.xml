@@ -41,7 +41,7 @@
 
         <set_value name="$returnValue.$quantity" exact="$ammoQuantity"/>
       </do_if>
-        
+      
       <do_if value="player.blueprints.{$ware}.any.exists">
         <!-- Indicate player has blueprint -->
         <set_value name="$returnValue.$type" exact="1"/>
