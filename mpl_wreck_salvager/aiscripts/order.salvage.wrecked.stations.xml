@@ -18,7 +18,7 @@
       <param name="salvageTime" type="internal" default="60" comment="Amount of time, in seconds, to salvage the station"/>
       <param name="debugChance" type="internal" default="0" comment="Output debug information to log"/>
     </params>
-    <skill min="40"/>
+    <skill min="90"/>
     <requires>
       <match shiptype="shiptype.lasertower" negate="true"/>
       <match class="class.spacesuit" negate="true"/>
