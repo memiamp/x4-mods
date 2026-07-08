@@ -14,6 +14,8 @@
 
 		<t id="11">Salvage Wrecked Stations</t>	
 		<t id="12">Salvage wrecked stations in designated sectors.</t>
+		<t id="13">Excluded Sectors</t>
+		<t id="14">Sectors to exclude from looking for wrecks.</t>
     
     <t id="21">Wrecked Ship Salvaged</t>
     <t id="22">Wrecked ship %1(ship name) \(%2\)(ship ID code) in %3(sector name) was salvaged and the wares were sent to %4(target name) \(%5\)(target ID code).</t>
