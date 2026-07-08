@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+  <add sel="//attention[@min='unknown']/actions/do_if[@value='not $targetclasses.count']" pos="before">
+    <!-- Fix an error where a single class is passed into the library -->
+    <do_if value="typeof $targetclasses == datatype.class">
+      <set_value name="$targetclasses" exact="[$targetclasses]"/>
+    </do_if>
+    
+    <!-- Fix an error where the count property is accessed with a null obejct -->
+    <do_if value="$targetclasses == null">
+      <set_value name="$targetclasses" exact="[class.ship_s, class.ship_m, class.ship_l, class.ship_xl, class.station]"/>
+    </do_if>
+  </add>
+</diff>
