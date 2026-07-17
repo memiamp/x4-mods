@@ -20,6 +20,20 @@ Instantly sells both picked up ammo drops and cargo inventory when finished coll
 
 Set it as a repeat order for the ship to continually pickup drops in a single sector.
 
+## [Enable Timelines Unlocks](/mpl_enable_timeline_unlocks)
+Unlocks all rewards automatically for the Timelines missions without having to perform the missions themselves.
+
+The change takes place immediately upon starting a new game, or loading an existing save game.
+
+Unlike other downloads that replace the userdata file entirely, this mod simply adds the required userdata settings to unlock everything.
+Note that because it is a mod, it will mark all games as modified.
+
+## [Fix Errors](/mpl_fix_errors)
+Fixes some minor bugs in the built-in game scripts, mainly to stop log spam but also corrects some non-working functionality.
+
+## [Mine In Sector](mpl_mine_in_sector)
+Tweaks the mining raidus of a ship to mine in a 350km (essentially the whole sector) instead of within a 40km radius.
+
 ## [No Pirate Plunder](/mpl_no_pirate_plunder)
 Stops pirate ships from plundering any player ships.
 
@@ -49,9 +63,12 @@ Also adds a new default order named 'Claim Abandoned Ships' for your ships that 
 As with the changes to player claiming, these automatically claimed ships will automatically get a new pilot and can (optionally) be sent to a safe, appropriate station.
 
 ## [Wreck Salvager](/mpl_wreck_salvager)
-Adds a new order to salvage wrecks in designated sectors to recover a small portion of their blueprint wares and send them to a designated player station.
+Adds new default behaviours to allow the automated salvaging of ships, and of stations.
 
-The designated ship will salvage wrecks until there are none remaining in the designated sectors, in which case they will dock at a friendly station.
+### Salvage Wrecked Ships
+Adds a new behaviour to salvage wrecked ships in designated sectors to recover a small portion of their blueprint wares and send them to a designated player station.
+
+The designated ship will salvage wrecks until there are none remaining in the designated sectors, in which case they will dock at a friendly station and wait for a new wreck to appear.
 
 The salvaging of the ship and equipment works by:
 - Salvaging 20% of the input materials where the player faction knows the blueprint for the equipment or ship being salvaged
@@ -59,3 +76,12 @@ The salvaging of the ship and equipment works by:
 
 The salvaged wares and cargo will be automatically added to the cargo storage on the target station for the Wreck Salvager.
 Where the salvaged wares would exceed the storage capacity, the remaining unsalvaged wares are converted to credits.
+
+### Salvage Wrecked Stations
+Adds a new behaviour to salvage wrecked stations in the whole universe (excluding specifically chosen sectors to avoid) to recover a small portion of their blueprint wares and send them to a designated player station.
+
+The designated ship will salvage wrecks until there are none remaining in the universe, in which case they will dock at a friendly station and wait for a new wreck to appear.
+
+The salvaging of the station module and loadout equipment (weapons, shields, etc.) works by:
+- Salvaging 20% of the input materials where the player faction knows the blueprint for the equipment or ship being salvaged
+- Salvaging 10% of the input materials where the player faction does not know the blueprint

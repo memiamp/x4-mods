@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mdscript name="mpl_enable_timeline_unlocks" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd">
+  <cues>
+    <cue name="mpl_unlock_timeline_rewards">
+      <conditions>
+        <check_any>
+          <event_cue_signalled cue="md.Setup.GameStart"/>
+          <event_game_loaded/>
+        </check_any>
+      </conditions>
+      
+      <actions>
+        <!-- Unlock best_rating based features -->
+        <set_value name="$bestRatings" exact="['scenario_dragonfyre_best_rating',
+                                               'scenario_escort_1_best_rating',
+                                               'scenario_khaak_boss_battle_best_rating',
+                                               'scenario_M0_boss_battle_best_rating',
+                                               'scenario_presidents_end_1_best_rating',
+                                               'scenario_protect_object_best_rating',
+                                               'scenario_race_1_best_rating',
+                                               'scenario_race_2_best_rating',
+                                               'scenario_race_3_best_rating',
+                                               'scenario_tharkas_cascade_best_rating',
+                                               'scenario_waveattack_antigone_best_rating']"/>
+        
+        <do_for_each in="$bestRatings" name="$bestRating">
+          <set_userdata name="$bestRating" value="5" comment="Gives this scenario the best rating possible"/>
+        </do_for_each>
+        story_timelines_quettanaut
+        
+        <!-- Unlocks Mitsuno's Remembrance -->
+        <set_userdata name="'hub_a6s4_complete'" value="76" comment="Set this to the maximum value"/>
+        
+        <!-- Unlock Quettanaut rewards -->
+        <set_userdata storystate="'story_timelines_quettanaut'" value="1"/>
+        
+        <!-- Unlock Timelines completion rewards -->
+        <set_userdata storystate="'story_timelines_grandmother'" value="1"/>
+      </actions>
+    </cue>
+  </cues>
+</mdscript>
