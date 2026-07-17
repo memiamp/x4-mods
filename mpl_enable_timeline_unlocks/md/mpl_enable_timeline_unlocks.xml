@@ -26,7 +26,6 @@
         <do_for_each in="$bestRatings" name="$bestRating">
           <set_userdata name="$bestRating" value="5" comment="Gives this scenario the best rating possible"/>
         </do_for_each>
-        story_timelines_quettanaut
         
         <!-- Unlocks Mitsuno's Remembrance -->
         <set_userdata name="'hub_a6s4_complete'" value="76" comment="Set this to the maximum value"/>
