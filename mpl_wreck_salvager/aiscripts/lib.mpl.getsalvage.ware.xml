@@ -10,6 +10,8 @@
   </params>
   <attention min="unknown">
     <actions>
+      <wait exact="1ms"/>
+      
       <set_value name="$returnValue" exact="table[
                                                   $credits = 0,
                                                   $materials = table[],
@@ -34,10 +36,15 @@
           <set_value name="$totalAmmo" exact="$totalAmmo + $matchingShip.ammostorage.{$ware.objectmacro}.count"/>
         </do_for_each>
 
-        <set_value name="$ammoQuantity" exact="($totalAmmo / $matchingShips.count)i"/>
-        <do_if value="$ammoQuantity le 0">
-          <set_value name="$ammoQuantity" exact="1"/>
+        <do_if value="$matchingShips.count gt 0">
+          <set_value name="$ammoQuantity" exact="($totalAmmo / $matchingShips.count)i"/>
+          <do_if value="$ammoQuantity le 0">
+            <set_value name="$ammoQuantity" exact="1"/>
+          </do_if>
         </do_if>
+        <do_else>
+          <set_value name="$ammoQuantity" exact="1"/>
+        </do_else>
 
         <set_value name="$returnValue.$quantity" exact="$ammoQuantity"/>
       </do_if>

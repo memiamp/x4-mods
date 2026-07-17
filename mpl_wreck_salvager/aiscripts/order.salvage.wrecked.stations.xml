@@ -2,7 +2,7 @@
 <aiscript name="order.salvage.wrecked.stations" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd" version="1">
   <order id="SalvageWreckedStations" name="{20105,11}" description="{20105,12}" category="salvage" infinite="true">
     <params>
-      <param name="sectors" default="[this.sector]" type="list" text="{20105,3}" comment="{20105,4}">
+      <param name="excludedSectors" default="[]" type="list" text="{20105,13}" comment="{20105,14}">
         <input_param name="type" value="'object'"/>
         <input_param name="class" value="[class.sector]"/>
       </param>
@@ -18,7 +18,7 @@
       <param name="salvageTime" type="internal" default="60" comment="Amount of time, in seconds, to salvage the station"/>
       <param name="debugChance" type="internal" default="0" comment="Output debug information to log"/>
     </params>
-    <skill min="40"/>
+    <skill min="90"/>
     <requires>
       <match shiptype="shiptype.lasertower" negate="true"/>
       <match class="class.spacesuit" negate="true"/>
@@ -42,11 +42,19 @@
 
       <wait exact="1ms"/>
       
-      <do_if value="not $sectors or not $target">
+      <do_if value="not $target">
         <resume label="finish"/>
       </do_if>
 
-      <find_station name="$wreck" space="$sectors" sortbydistanceto="this.assignedcontrolled" checkoperational="false" state="componentstate.wreck" multiple="false"/>
+      <!-- Get excluded sector macros -->
+      <set_value name="$excludedSectorMacros" exact="[]"/>
+      <do_for_each in="$excludedSectors" name="$excludedSector">
+        <append_to_list name="$excludedSectorMacros" exact="$excludedSector.macro"/>
+      </do_for_each>
+
+      <find_station name="$wreck" space="player.galaxy" sortbydistanceto="this.assignedcontrolled" checkoperational="false" state="componentstate.wreck" multiple="false">
+        <match_context macro="$excludedSectorMacros" negate="true"/>
+      </find_station>
       
       <do_if value="$wreck and $wreck.iswreck">
         <!-- Undock if currently docked -->
