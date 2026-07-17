@@ -28,6 +28,12 @@ The change takes place immediately upon starting a new game, or loading an exist
 Unlike other downloads that replace the userdata file entirely, this mod simply adds the required userdata settings to unlock everything.
 Note that because it is a mod, it will mark all games as modified.
 
+## [Fix Errors](/mpl_fix_errors)
+Fixes some minor bugs in the built-in game scripts, mainly to stop log spam but also corrects some non-working functionality.
+
+## [Mine In Sector](mpl_mine_in_sector)
+Tweaks the mining raidus of a ship to mine in a 350km (essentially the whole sector) instead of within a 40km radius.
+
 ## [No Pirate Plunder](/mpl_no_pirate_plunder)
 Stops pirate ships from plundering any player ships.
 
