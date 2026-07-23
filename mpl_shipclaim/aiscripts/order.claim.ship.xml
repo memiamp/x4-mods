@@ -92,6 +92,8 @@
             </do_if>
           </do_else>
         </do_if>
+        
+        <remove_value name="$claimableShip"/>
       </do_if>
       <do_elseif value="not this.assignedcontrolled.dock and $dockIfNoShips">
         <!-- Nothing to claim so dock at nearest safe station -->
@@ -123,6 +125,9 @@
             <param name="waittime" value="15s"/>
           </run_script>
         </do_if>
+        
+        <remove_value name="$stations"/>
+        <remove_value name="$station"/>
       </do_elseif>
       
       <label name="restart"/>

@@ -106,6 +106,8 @@
 
               <set_value name="$waresTable.{$ware}" exact="$newAmount"/>
             </do_for_each>
+            
+            <remove_value name="$shipSalvage"/>
           </do_if>
           <do_else>
             <debug_text text="'MPL Salvage Wrecks Order: Salvage of ship %s (%s) could not be calculated'.[$wreckedShip.knownname, $wreckedShip.idcode]" chance="$debugChance"/>
@@ -137,6 +139,8 @@
                 <set_value name="$newAmount" exact="$currentAmount + $amount * $wareSalvage.$quantity"/>
                 <set_value name="$waresTable.{$ware}" exact="$newAmount"/>
               </do_for_each>
+              
+              <remove_value name="$wareSalvage"/>
             </do_if>
             <do_else>
               <debug_text text="'MPL Salvage Wrecks Order: Salvage of loadout for ship %s (%s) could not be calculated'.[$wreckedShip.knownname, $wreckedShip.idcode]" chance="$debugChance"/>
@@ -169,7 +173,9 @@
               <set_value name="$wareMessage" exact="$wareMessage + {20105, 26}.[$ware.name, $amount]"/>
             </do_else>
           </do_for_each>
-              
+
+          <remove_value name="$waresTable"/>
+
           <!-- Add credit balance -->
           <set_value name="$creditMessage" exact="''"/>
           <do_if value="$totalCredits gt 0">
@@ -201,6 +207,8 @@
           
           <!-- Destroy the wreck -->
           <destroy_object object="$wreckedShip" explosion="false"/>
+          
+          <remove_value name="$wreckedShip"/>
         </do_if>
       </do_if>
       <do_elseif value="not this.assignedcontrolled.dock and $dockOnIdle">
@@ -226,13 +234,16 @@
             </do_if>
           </do_if>
         </do_for_each>
-        
+                
         <do_if value="$station">
           <run_script name="'order.dock'">
             <param name="destination" value="$station"/>
             <param name="waittime" value="15s"/>
           </run_script>
         </do_if>
+        
+        <remove_value name="$stations"/>
+        <remove_value name="$station"/>
       </do_elseif>
       
       <label name="restart"/>

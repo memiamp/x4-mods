@@ -281,6 +281,9 @@
               </do_if>
               
               <write_to_logbook category="general" title="{20104, 14}" text="$message"/>
+
+              <remove_value name="player.entity.$salvageShip"/>
+              <remove_value name="$salvageData"/>
             </do_if>
             <do_else>
               <debug_text text="'MPL Salvage Ship: No salvage data was found to perform salvage on'" chance="$debugChance"/>

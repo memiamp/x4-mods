@@ -3,11 +3,11 @@
   <cues>
     <cue name="MonitorPlayerShips" instantiate="true">
       <conditions>
-        <event_object_changed_sector object="player.ship" />
+        <event_object_changed_sector object="player.entity" />
       </conditions>
       
       <actions>
-        <find_object name="$stationsInSector" class="class.station" space="player.ship.sector" multiple="true"/>
+        <find_object name="$stationsInSector" class="class.station" space="player.entity.sector" multiple="true"/>
         <do_all exact="$stationsInSector.count" counter="$i">
           <set_value name="$station" exact="$stationsInSector.{$i}" />
 
@@ -17,7 +17,17 @@
           </do_if>
         </do_all>
   
-        <find_object name="$asteroidsInSector" class="class.asteroid" space="player.ship.sector" multiple="true"/>
+        <find_object name="$shipsInSector" class="class.ship" space="player.entity.sector" multiple="true"/>
+        <do_all exact="$shipsInSector.count" counter="$i">
+          <set_value name="$ship" exact="$shipsInSector.{$i}" />
+
+          <do_if value="$ship.owner != faction.player">
+            <set_known object="$ship" known="true"/>
+            <set_object_scanned object="$ship"/>
+          </do_if>
+        </do_all>
+  
+        <find_object name="$asteroidsInSector" class="class.asteroid" space="player.entity.sector" multiple="true"/>
         <do_all exact="$asteroidsInSector.count" counter="$i">
           <set_value name="$asteroid" exact="$asteroidsInSector.{$i}" />
 
@@ -25,8 +35,11 @@
           <set_object_scanned object="$asteroid"/>
         </do_all>
 
+        <remove_value name="$asteroid"/>
         <remove_value name="$asteroidsInSector"/>
+        <remove_value name="$ship"/>
         <remove_value name="$shipsInSector"/>
+        <remove_value name="$station"/>
         <remove_value name="$stationsInSector"/>
       </actions>
     </cue>
