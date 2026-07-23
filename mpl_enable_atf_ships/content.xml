@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content name="MPL Enable ATF Ships" id="mpl_enable_atf_ships" author="Memia" version="1" date="2026-06-14">
+  <text language="44" name="MPL Enable ATF Ships" description="Enables purchase of ATF ships from Terran shipyards"></text>
+</content>

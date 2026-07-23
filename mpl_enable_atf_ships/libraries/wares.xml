@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+<!--
+		Asgard and Syn for sale.
+-->
+	<replace sel="//wares/ware[@id='ship_atf_l_destroyer_01_a']/@tags">ship</replace>
+	<replace sel="//wares/ware[@id='ship_atf_xl_battleship_01_a']/@tags">ship</replace>
+</diff>
