@@ -8,49 +8,68 @@
       
       <actions>
         <!-- Get the existing probes so we can remove them afterwards -->
-        <find_object name="$resourceProbesInSector" class="class.resourceprobe" owner="faction.player" space="player.entity.sector" multiple="true"/>
+        <find_object name="$existingProbes" class="class.resourceprobe" owner="faction.player" space="player.entity.sector" multiple="true"/>
 
         <!-- Don't add resources to sectors without any resource areas -->
         <do_if value="player.entity.sector.resources.count gt 0">
-          <set_value name="$probeSpacing" exact="100000" />
-          <set_value name="$probeOffsetY" exact="15000" />
+          <!-- Get probe type -->
+          <set_value name="$targetMacro" exact="macro.eq_arg_resourceprobe_01_macro"/>
+          
+          <!-- Positional parameters -->
+          <set_value name="$spacing" exact="75000" />
           
           <set_value name="$corePosition" exact="player.entity.sector.coreposition" />
-          <set_value name="$coreSize" exact="(player.entity.sector.coresize)i" />
-          <set_value name="$coreHalfSize" exact="$coreSize / 2" />
-          <set_value name="$remainder" exact="$coreHalfSize % $probeSpacing" />
-          <set_value name="$coreMod" exact="$coreHalfSize - $remainder" />
-          <set_value name="$incrementsX" exact="$coreMod / $probeSpacing" />
-          <set_value name="$xOffset" exact="$corePosition.x / 2" />
-          <set_value name="$y" exact="$corePosition.y - $probeOffsetY" />
-          <set_value name="$zOffset" exact="$corePosition.z / 2" />
+          <set_value name="$coreRadius" exact="(player.entity.sector.coresize)i / 2" />
+          
+          <set_value name="$minX" exact="$corePosition.x - $coreRadius - $spacing" />
+          <set_value name="$maxX" exact="$corePosition.x + $coreRadius + $spacing" />
+          <set_value name="$minZ" exact="$corePosition.z - $coreRadius - $spacing" />
+          <set_value name="$maxZ" exact="$corePosition.z + $coreRadius + $spacing" />
 
-          <set_value name="$counterZ" exact="0 - $incrementsX" />
-          <do_while value="$counterZ lt ($incrementsX + 1)">
-            <set_value name="$z" exact="$counterZ * $probeSpacing + $zOffset" />
-            
-            <set_value name="$counterX" exact="0 - $incrementsX" />
-            <do_while value="$counterX lt ($incrementsX + 1)">
-              <set_value name="$x" exact="$counterX * $probeSpacing + $xOffset" />
+          <set_value name="$targetPositions" exact="[]"/>
+          
+          <!-- Go through points in the sector -->
+          <set_value name="$x" exact="$minX" />
+          <do_while value="$x lt $maxX">
 
-              <create_object macro="macro.eq_arg_resourceprobe_01_macro" owner="faction.player" sector="player.entity.sector">
-                <position x="$x" y="$y" z="$z"/>
-              </create_object>
-
-              <set_value name="$counterX" exact="$counterX + 1" />
+            <set_value name="$z" exact="$minZ" />
+            <do_while value="$z lt $maxZ">
+              <set_value name="$searchPosition" exact="position.[$x, 0, $z]"/>
+              
+              <find_closest_resource refobject="player.entity.sector" ware="player.entity.sector.resources.list" ignoredangerousregions="true" wares="$targetWares" sector="$targetSector" position="$targetPosition">
+                <refposition value="$searchPosition"/>
+              </find_closest_resource>
+              
+              <set_value name="$exists" exact="$targetPositions.indexof.{$targetPosition}"/>
+              <do_if value="$exists == 0">
+                <append_to_list name="$targetPositions" exact="$targetPosition"/>
+              </do_if>
+  
+              <set_value name="$z" exact="$z + $spacing"/>
             </do_while>
-
-            <set_value name="$counterZ" exact="$counterZ + 1" />
+            
+            <set_value name="$x" exact="$x + $spacing"/>
           </do_while>
+
+          <do_for_each in="$targetPositions" name="$targetPosition">
+            <create_object macro="$targetMacro" owner="faction.player" sector="player.entity.sector">
+              <position value="$targetPosition"/>
+            </create_object>
+          </do_for_each>
+
+          <remove_value name="$targetMacro"/>
+          <remove_value name="$targetPosition"/>
+          <remove_value name="$targetPositions"/>
+          <remove_value name="$targetWares"/>
         </do_if>
 
         <!-- Remove the existing probes -->
-        <do_all exact="$resourceProbesInSector.count" counter="$i">
-          <destroy_object object="$resourceProbesInSector.{$i}" explosion="false" />
+        <do_all exact="$existingProbes.count" counter="$i">
+          <destroy_object object="$existingProbes.{$i}" explosion="false" />
         </do_all>
         
         <!-- Tidy up -->
-        <remove_value name="$resourceProbesInSector"/>
+        <remove_value name="$existingProbes"/>
       </actions>
     </cue>
   </cues>
