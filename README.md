@@ -3,6 +3,9 @@ Various game mods for X4 Foundations.
 
 These are available under the MIT license.
 
+## [Advanced Satellite Mk3](/mpl_satellite)
+Adds a new Mk3 Advanced Satellite that offers more durability and a 250km radar range.
+
 ## [Auto Resource Probe](/mpl_auto_resource_probe)
 Automaticallys adds resource probes to sectors with resources when the player enters them.
 

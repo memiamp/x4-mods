@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+  <add sel="//deployable/macros">
+    <macro category="satellite" mk="3" macro="eq_arg_satellite_03_macro" />
+  </add>
+</diff>
