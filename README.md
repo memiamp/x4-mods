@@ -29,6 +29,9 @@ Instantly sells both picked up ammo drops and cargo inventory when finished coll
 
 Set it as a repeat order for the ship to continually pickup drops in a single sector.
 
+## [Enable ATF Ship Buying](/mpl_enable_atf_ships)
+Unrestricts the blueprints for the Asgard and Syn with the Terran faction so that the player can order them at Terran shipyards.
+
 ## [Enable Timelines Unlocks](/mpl_enable_timeline_unlocks)
 Unlocks all rewards automatically for the Timelines missions without having to perform the missions themselves.
 
