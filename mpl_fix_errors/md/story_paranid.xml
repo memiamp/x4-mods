@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+  <add sel="//cues/cue[@name='Start']/cues/cue[@name='Sinks_Unification_Stage_3' and @version='2']/cues/cue[@name='Uni_3_Double_Sink']/cues/cue[@name='Uni_3_Deliver_Inventory' and @version='2']/actions/set_value[@name='$Cr_Amount']" pos="after">
+    <!-- Reduce the story requirements -->
+    <set_value name="$Cr_Amount" exact="1000 * 1000"/>
+  </add>
+</diff>

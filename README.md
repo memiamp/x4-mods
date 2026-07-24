@@ -38,10 +38,14 @@ Unlocks all rewards automatically for the Timelines missions without having to p
 The change takes place immediately upon starting a new game, or loading an existing save game.
 
 Unlike other downloads that replace the userdata file entirely, this mod simply adds the required userdata settings to unlock everything.
-Note that because it is a mod, it will mark all games as modified.
+
+This mod can be removed immediately once it has run one time.  There is no side effect from leaving it in place.
 
 ## [Fix Errors](/mpl_fix_errors)
 Fixes some minor bugs in the built-in game scripts, mainly to stop log spam but also corrects some non-working functionality.
+
+Revises the cost of funding Boso's research in the Paranid plotline from 1,000,000,000 to 1,000,000 credits.  1bn is a ridiculous amount to fund an individual doing any kind of research.
+Note that this will only work if you have not yet already started the plotline.
 
 ## [Mine In Sector](mpl_mine_in_sector)
 Tweaks the mining raidus of a ship to mine in a 350km (essentially the whole sector) instead of within a 40km radius.
