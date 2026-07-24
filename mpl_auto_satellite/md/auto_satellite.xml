@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mdscript name="mp_autosatellite" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd" version="1">
+  <cues>
+    <cue name="MonitorPlayerShips" instantiate="true">
+      <conditions>
+        <event_object_changed_sector object="player.entity" />
+      </conditions>
+      
+      <actions>
+        <!-- Get existing satellites to remove later -->
+        <find_object name="$existingSatellites" class="class.satellite" owner="faction.player" space="player.entity.sector" multiple="true"/>
+
+        <!-- Get satellite type -->
+        <set_value name="$targetMacro" exact="macro.eq_arg_satellite_02_macro"/>
+
+        <do_if value="macro.eq_arg_satellite_03_macro?">
+          <set_value name="$targetMacro" exact="macro.eq_arg_satellite_03_macro"/>
+        </do_if>
+        
+        <!-- Set parameters -->
+        <set_value name="$radarRange" exact="$targetMacro.maxradarrange"/>
+        <set_value name="$radarOffset" exact="($radarRange / 2)i"/>
+        <set_value name="$targetClasses" exact="[class.datavault, class.gate, class.highwayentrygate, class.highwayexitgate, class.station]"/>
+        <set_value name="$yOffset" exact="30000" />
+
+        <!-- Create standard satellites -->
+        <set_value name="$coreRadius" exact="player.entity.sector.coreposition" />
+        <set_value name="$satellites" exact="[]"/>
+        <set_value name="$xPlus" exact="$coreRadius.x + $radarOffset" />
+        <set_value name="$xMinus" exact="$coreRadius.x - $radarOffset" />
+        <set_value name="$y" exact="$coreRadius.y - $yOffset" />
+        <set_value name="$zPlus" exact="$coreRadius.z + $radarOffset" />
+        <set_value name="$zMinus" exact="$coreRadius.z - $radarOffset" />
+        
+        <create_object name="$newSatellite" macro="$targetMacro" owner="faction.player" sector="player.entity.sector">
+          <position x="$xPlus" y="$y" z="$zMinus"/>
+        </create_object>
+        <append_to_list name="$satellites" exact="$newSatellite"/>
+        
+        <create_object name="$newSatellite" macro="$targetMacro" owner="faction.player" sector="player.entity.sector">
+          <position x="$xMinus" y="$y" z="$zMinus"/>
+        </create_object>
+        <append_to_list name="$satellites" exact="$newSatellite"/>
+
+        <create_object name="$newSatellite" macro="$targetMacro" owner="faction.player" sector="player.entity.sector">
+          <position x="$xPlus" y="$y" z="$zPlus"/>
+        </create_object>
+        <append_to_list name="$satellites" exact="$newSatellite"/>
+
+        <create_object name="$newSatellite" macro="$targetMacro" owner="faction.player" sector="player.entity.sector">
+          <position x="$xMinus" y="$y" z="$zPlus"/>
+        </create_object>
+        <append_to_list name="$satellites" exact="$newSatellite"/>
+
+        <!-- Verify that all targets in the sector are visible from a satellite -->
+        <find_object name="$targets" class="$targetClasses" space="player.entity.sector" multiple="true"/>
+        <do_for_each in="$targets" name="$target">
+          <set_value name="$isVisible" exact="0"/>
+          <do_for_each in="$satellites" name="$satellite">
+            <set_value name="$distance" exact="$satellite.distanceto.{$target}"/>
+
+            <do_if value="$distance le $radarRange">
+              <set_value name="$isVisible" exact="1"/>
+              <break/>
+            </do_if>
+          </do_for_each>
+
+          <!-- Add a satellite for this target as it's not currently visible -->
+          <do_if value="$isVisible == 0">
+            <set_value name="$targetPosition" exact="$target.relativeposition.{player.entity.sector}"/>
+            <do_if value="$targetPosition.y le 0">
+              <set_value name="$yPosition" exact="$targetPosition.y - $yOffset"/>
+            </do_if>
+            <do_else>
+              <set_value name="$yPosition" exact="$targetPosition.y + $yOffset"/>
+            </do_else>
+            
+            <create_object name="$newSatellite" macro="$targetMacro" owner="faction.player" sector="player.entity.sector">
+              <position x="$targetPosition.x" y="$yPosition" z="$targetPosition.z"/>
+            </create_object>
+            <append_to_list name="$satellites" exact="$newSatellite"/>
+          </do_if>
+        </do_for_each>
+
+        <!-- Remove existing satellites -->
+        <do_all exact="$existingSatellites.count" counter="$i">
+          <destroy_object object="$existingSatellites.{$i}" explosion="false" />
+        </do_all>
+        
+        <!-- Tidy up -->
+        <remove_value name="$existingSatellites"/>
+        <remove_value name="$newSatellite"/>
+        <remove_value name="$satellites"/>
+        <remove_value name="$target"/>
+        <remove_value name="$targetClasses"/>
+        <remove_value name="$targetMacro"/>
+        <remove_value name="$targets"/>
+      </actions>
+    </cue>
+  </cues>
+</mdscript>

@@ -6,7 +6,16 @@ These are available under the MIT license.
 ## [Auto Resource Probe](/mpl_auto_resource_probe)
 Automaticallys adds resource probes to sectors with resources when the player enters them.
 
-Only applies to the player's current ship.
+The behaviour will execute even where the player is not pilot of a ship (i.e. travelling as a ship passenger, or using teleport).
+
+## [Auto Satellite](/mpl_auto_satellite)
+Automaticallys adds satellites to a sector whenever the player enters one.
+
+The satellites are placed so that all gates, highways, and stations are covered by at least one.
+
+The behaviour will execute even where the player is not pilot of a ship (i.e. travelling as a ship passenger, or using teleport).
+
+This will automatically use a "Mk3 Advanced" satellite from any mods that may have been installed.  It will automatically use a standard "Mk2 Advanced" Satellite if no suitable mod is installed.
 
 ## [Auto Scan Sector](/mpl_auto_scan_sector)
 Automatically fully scans a sector when the player enters it.

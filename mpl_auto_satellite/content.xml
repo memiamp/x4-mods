@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content name="MPL Automatic Satellite" id="mpl_advancedsat" author="Memia" version="1" date="2026-05-09">
+  <text language="44" name="MPL Automatic Satellite" description="Automatically adds satellites to sectors"></text>
+</content>
