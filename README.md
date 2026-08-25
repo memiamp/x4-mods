@@ -75,6 +75,15 @@ Salvaged inventory items are automatically added to the player's inventory.
 
 Once a ship has been salvaged it is permanently removed from the game universe.
 
+## Sector Collector(/mpl_sector_collector)
+Adds a new behaviour to collect drops in one or more sectors.
+
+If a target station is configured, then the collected wares will be deposited in the station's cargo.  If full, the wares will be sold at average value automatically.
+
+Any inventory items will be sent directly to the player's inventory if the "Transfer Inventory" switch is on.  Otherwise the pilot will retain them in their inventory.
+
+Ammunition and deployables that are collected will be sold for their average value automatically.
+
 ## [Ship Claim](/mpl_shipclaim)
 Improved player claiming of abandoned ships by:
 - Allowing the player to scan from their ship within 200m of data leak

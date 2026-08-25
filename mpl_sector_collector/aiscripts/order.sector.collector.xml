@@ -1,0 +1,253 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<aiscript name="order.sector.collector" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="md.xsd" version="1">
+  <order id="SectorCollector" name="{20106,1}" description="{20106,2}" category="trade" infinite="true">
+    <params>
+      <param name="sectors" default="[this.sector]" type="list" text="{20106,3}" comment="{20106,4}">
+        <input_param name="type" value="'object'"/>
+        <input_param name="class" value="[class.sector]"/>
+      </param>
+      <param name="target" default="null" type="object" text="{20106,5}" comment="{20106,6}">
+        <input_param name="class" value="[class.station]"/>
+        <input_param name="owner" value="this.object.owner"/>
+      </param>
+      <param name="transferInventory" type="bool" default="true" text="{20106,7}" comment="{20106,8}"/>
+      <param name="dockOnIdle" type="bool" default="true" text="{20106,9}" comment="{20106,10}"/>
+      <param name="debugChance" type="internal" default="0" comment="Output debug information to log"/>
+    </params>
+    <skill min="50"/>
+    <requires>
+      <match shiptype="shiptype.lasertower" negate="true"/>
+      <match class="class.spacesuit" negate="true"/>
+    </requires>
+  </order>
+  
+  <interrupts>
+    <handler ref="SectorChangeHandler"/>
+    <handler ref="AttackHandler"/>
+    <handler ref="MissileLockHandler"/>
+    <handler ref="ScannedHandler"/>
+    <handler ref="InspectedHandler"/>
+    <handler ref="ResupplyHandler"/>
+    <handler ref="TargetInvalidHandler"/>
+    <handler ref="TideHandler"/>
+  </interrupts>
+
+  <attention min="unknown">
+    <actions>
+      <label name="start"/>
+
+      <wait exact="1ms"/>
+      
+      <do_if value="not $sectors">
+        <resume label="finish"/>
+      </do_if>
+
+      <!-- Look for something to collect -->
+      <find_object name="$drop" class="class.drop" space="$sectors" sortbydistanceto="this.assignedcontrolled" multiple="false"/>
+      <do_if value="$drop">
+        <debug_text text="'MPL Sector Collector: Found a drop with ID %s'.[$drop.idcode]" chance="$debugChance"/>
+
+        <!-- Undock if currently docked -->
+        <do_if value="this.assignedcontrolled.dock">
+          <run_script name="'move.undock'"/>
+        </do_if>
+
+        <!-- Only move to the new drop if it isn't within 6km -->
+        <set_value name="$dropDistance" exact="this.assignedcontrolled.distanceto.{$drop}"/>
+        <do_if value="$dropDistance gt 6000">
+          <!-- Move to the drop -->
+          <set_command command="command.move" param="$drop"/>
+          <run_script name="'move.generic'" result="$movesuccess">
+            <param name="destination" value="$drop"/>
+            <!--<param name="debugchance" value="$debugChance"/>-->
+          </run_script>
+
+          <do_if value="not $movesuccess">
+            <!-- Could not move to drop so restart process again -->
+            <resume label="restart"/>
+          </do_if>
+          <do_if value="not this.assignedcontrolled.cansee.{$drop}">
+            <!-- Cannot see drop after moving so restart -->
+            <resume label="restart"/>
+          </do_if>
+        </do_if>
+        
+        <set_command command="command.collect" param="$drop" />
+
+        <!-- Check the type of drop -->
+        <do_if value="$drop.isdeployable">
+          <!-- Add value of deployable -->
+          <set_value name="$creditAmount" exact="$drop.macro.ware.averageprice"/>
+          <transfer_money from="faction.ownerless" to="faction.player" amount="$creditAmount"/>
+
+          <debug_text text="'MPL Sector Collector: Added %s credits for %s to player'.[$creditAmount, $drop.macro.ware]" chance="$debugChance"/>
+          
+          <write_to_logbook category="general" title="{20106, 36}" text="{20106, 29}.[
+                                                                                      this.assignedcontrolled.name,
+                                                                                      this.assignedcontrolled.idcode,
+                                                                                      $drop.macro.ware,
+                                                                                      1,
+                                                                                      $creditAmount.formatted.default]"/>
+        </do_if>
+        <do_elseif value="$drop.wares.list.count gt 0">
+          <!-- Process through wares in drop -->
+          <set_value name="$wares" exact="$drop.wares.list"/>
+
+          <do_for_each name="$ware" in="$wares">
+            <set_value name="$amount" exact="$drop.wares.{$ware}.count"/>
+
+            <do_if value="$ware.isinventory">
+              <do_if value="$transferInventory">
+                <add_inventory ware="$ware" exact="$amount" entity="player.entity"/>
+                
+                <debug_text text="'MPL Sector Collector: Added %s of %s to player inventory'.[$amount, $ware]" chance="$debugChance"/>
+
+                <write_to_logbook category="general" title="{20106, 21}" text="{20106, 22}.[
+                                                                                            this.assignedcontrolled.name,
+                                                                                            this.assignedcontrolled.idcode,
+                                                                                            $ware,
+                                                                                            $amount]"/>
+              </do_if>
+              <do_else>
+                <add_inventory ware="$ware" exact="$amount" entity="this.assignedcontrolled.pilot"/>
+
+                <debug_text text="'MPL Sector Collector: Added %s of %s to pilot inventory of %s (%s)'.[$amount, $ware, this.assignedcontrolled.knownname, this.assignedcontrolled.idcode]" chance="$debugChance"/>
+
+                <write_to_logbook category="general" title="{20106, 21}" text="{20106, 23}.[
+                                                                                            this.assignedcontrolled.name,
+                                                                                            this.assignedcontrolled.idcode,
+                                                                                            $ware,
+                                                                                            $amount]"/>
+              </do_else>
+            </do_if>
+            <do_else>
+              <set_value name="$added" exact="0"/>
+              <set_value name="$remainingAmount" exact="$amount"/>
+              
+              <!-- Send ware to target station, if any -->
+              <do_if value="$target">
+                <add_cargo object="$target" ware="$ware" exact="$amount" result="$added"/>
+                <set_value name="$remainingAmount" exact="$amount - $added"/>
+
+                <debug_text text="'MPL Sector Collector: Added %s of %s to %s (%s)'.[$added, $ware, $target.knownname, $target.idcode]" chance="$debugChance"/>
+              </do_if>
+              
+              <!-- If any excess (or no target station), credit player with remaining value -->
+              <do_if value="$remainingAmount gt 0">
+                <set_value name="$creditAmount" exact="$remainingAmount * $ware.averageprice"/>
+                <do_if value="$creditAmount gt 0">
+                  <transfer_money from="faction.ownerless" to="faction.player" amount="$creditAmount"/>
+
+                  <debug_text text="'MPL Sector Collector: Added %s credits for %s of %s to player'.[$creditAmount, $amount, $ware]" chance="$debugChance"/>
+
+                  <do_if value="$target">
+                    <write_to_logbook category="general" title="{20106, 26}" text="{20106, 28}.[
+                                                                                                this.assignedcontrolled.name,
+                                                                                                this.assignedcontrolled.idcode,
+                                                                                                $ware,
+                                                                                                $amount,
+                                                                                                $added,
+                                                                                                $target.knownname,
+                                                                                                $target.idcode,
+                                                                                                $creditAmount.formatted.default]"/>
+                  </do_if>
+                  <do_else>
+                    <write_to_logbook category="general" title="{20106, 26}" text="{20106, 29}.[
+                                                                                                this.assignedcontrolled.name,
+                                                                                                this.assignedcontrolled.idcode,
+                                                                                                $ware,
+                                                                                                $amount,
+                                                                                                $creditAmount.formatted.default]"/>
+                  </do_else>
+                </do_if>
+              </do_if>
+              <do_else>
+                <write_to_logbook category="general" title="{20106, 26}" text="{20106, 27}.[
+                                                                                            this.assignedcontrolled.name,
+                                                                                            this.assignedcontrolled.idcode,
+                                                                                            $ware,
+                                                                                            $amount,
+                                                                                            $target.knownname,
+                                                                                            $target.idcode]"/>
+              </do_else>
+            </do_else>
+          </do_for_each>
+
+          <remove_value name="$ware"/>
+          <remove_value name="$wares"/>
+        </do_elseif>
+        <do_elseif value="@$drop.ammo.count">
+          <!-- If ammo, add credits for ammo value -->
+          <set_value name="$creditAmount" exact="@$drop.ammo.count * $drop.ammo.macro.ware.averageprice"/>
+          <transfer_money from="faction.ownerless" to="faction.player" amount="$creditAmount"/>
+
+          <debug_text text="'MPL Sector Collector: Added %s credits for %s of %s to player'.[$creditAmount, @$drop.ammo.count, $drop.ammo.macro.ware]" chance="$debugChance"/>
+
+          <write_to_logbook category="general" title="{20106, 31}" text="{20106, 29}.[
+                                                                                      this.assignedcontrolled.name,
+                                                                                      this.assignedcontrolled.idcode,
+                                                                                      $drop.ammo.macro.ware,
+                                                                                      @$drop.ammo.count,
+                                                                                      $creditAmount.formatted.default]"/>
+        </do_elseif>
+
+        <!-- Destroy the drop -->
+        <destroy_object object="$drop" explosion="false"/>
+      </do_if>
+      <do_elseif value="not this.assignedcontrolled.dock and $dockOnIdle">
+        <!-- Nothing to collect so dock at nearest safe station -->
+        <find_station name="$stations" space="player.galaxy" sortbydistanceto="this.assignedcontrolled" multiple="true">
+          <match knownto="this.assignedcontrolled.owner"/>
+          <match checkoperational="true"/>
+          <match mayattack="this.assignedcontrolled" negate="true"/>
+          <match_relation_to faction="this.assignedcontrolled.owner" comparison="ge" relation="neutral"/>
+        </find_station>
+
+        <do_for_each name="$stationinlist" in="$stations">
+          <!-- Ensure that the station is in a friendly sector -->
+          <do_if value="$stationinlist.sector.owner.hasrelation.dock.{this.assignedcontrolled.owner}">
+            <!-- Make sure the station has a free docking bay -->
+            <find_dockingbay object="$stationinlist" name="$dock">
+              <match_dock size="this.assignedcontrolled.docksize"/>
+            </find_dockingbay>
+            
+            <do_if value="$dock">
+              <set_value name="$station" exact="$stationinlist"/>
+              <break/>
+            </do_if>
+          </do_if>
+        </do_for_each>
+                
+        <do_if value="$station">
+          <debug_text text="'MPL Sector Collector: Docking at %s (%s)'.[$station.knownname, $station.idcode]" chance="$debugChance"/>
+
+          <run_script name="'order.dock'">
+            <param name="destination" value="$station"/>
+            <param name="waittime" value="15s"/>
+          </run_script>
+        </do_if>
+        
+        <remove_value name="$stations"/>
+        <remove_value name="$station"/>
+      </do_elseif>
+      
+      <label name="restart"/>
+      
+      <set_command command="command.scan"/>
+      <set_command_action commandaction="commandaction.calculating"/>
+      
+      <set_value name="$minWait" exact="([300 - (this.assignedcontrolled.pilot.skill.piloting * 20) + 250, 250].max)ms"/>
+      <set_value name="$maxWait" exact="([600 - (this.assignedcontrolled.pilot.skill.piloting * 40) + 500, 500].max)ms"/>
+      <debug_text text="'MPL Sector Collector: Waiting %s-%ss for next iteration'.[$minWait, $maxWait]" chance="$debugChance"/>
+      <wait min="$minWait" max="$maxWait"/>
+      
+      <resume label="start"/>
+
+      <label name="finish"/>
+
+      <remove_value name="$drop"/>
+
+      <set_order_syncpoint_reached order="this.assignedcontrolled.order"/>
+    </actions>
+  </attention>
+</aiscript>

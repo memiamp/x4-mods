@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<content name="MPL Sector Collector" id="mpl_sector_collector" author="Memia" version="2" date="2026-08-21">
+  <text language="44" name="MPL Sector Collector" description="Adds a new repeat order to instruct a ship to collect drops in designated sectors"></text>
+</content>

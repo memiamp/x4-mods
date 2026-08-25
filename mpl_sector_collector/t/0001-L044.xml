@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<language id="44">
+  <page id="20106">
+		<t id="1">Collect Drops</t>	
+		<t id="2">Collect drops in designated sectors.</t>
+		<t id="3">Sectors</t>
+		<t id="4">Sectors to look for drops.</t>
+		<t id="5">Ware Target</t>
+		<t id="6">The target station for collected wares to be sent (optional)</t>
+		<t id="7">Transfer inventory?</t>
+		<t id="8">Automatically transfer inventory items to the player?</t>
+		<t id="9">Dock when idle?</t>
+		<t id="10">Dock at the nearest safe station when nothing to do?</t>
+    
+    <t id="21">Inventory Drop Collected</t>
+    <t id="22">Ship %1(ship name) \(%2\)(ship ID code) collected \033B%3(ware name)\033X x\033C%4(ware amount)\033X and added it to the player's inventory.</t>
+    <t id="23">Ship %1(ship name) \(%2\)(ship ID code) collected \033B%3(ware name)\033X x\033C%4(ware amount)\033X and added it to the pilot's inventory.</t>
+
+    <t id="26">Ware Drop Collected</t>
+    <t id="27">Ship %1(ship name) \(%2\)(ship ID code) collected \033B%3(ware name)\033X x\033C%4(ware amount)\033X and sent it to %5(target name) \(%6\)(target ID code).</t>
+    <t id="28">Ship %1(ship name) \(%2\)(ship ID code) collected \033B%3(ware name)\033X x\033C%4(ware amount)\033X and sent \033C%5(added amount)\033X to %6(target name) \(%7\)(target ID code), selling the remainder for \033G%8(added credits)\033XCr.</t>
+    <t id="29">Ship %1(ship name) \(%2\)(ship ID code) collected \033B%3(ware name)\033X x\033C%4(ware amount)\033X and sold it for \033G%5(added credits)\033XCr.</t>
+    
+    <t id="31">Ammo Drop Collected</t>
+    
+    <t id="36">Deployable Drop Collected</t>
+
+  </page>
+</language>
