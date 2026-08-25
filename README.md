@@ -53,6 +53,9 @@ Note that this will only work if you have not yet already started the plotline.
 ## [Mine In Sector](mpl_mine_in_sector)
 Tweaks the mining raidus of a ship to mine in a 350km (essentially the whole sector) instead of within a 40km radius.
 
+## [No Agent Death](/mpl_no_agent_death)
+Modifies the outcome of diplomacy events so that your agents can no longer be killed during an operation.
+
 ## [No Pirate Plunder](/mpl_no_pirate_plunder)
 Stops pirate ships from plundering any player ships.
 

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<diff>
+	<add sel="/mdscript[@name='Diplomacy']/cues/cue[@name='Start']/cues/cue[@name='EmbassyCues']/cues/cue[@name='AgentManagement']/cues/library[@name='Success_Evaluation']/actions/do_if[@value='not $Success and ($Risk != agentrisk.none)']/set_value[@name='$Killed']" pos="after">
+		<set_value name="$Killed" exact="0" />
+	</add>
+
+	<add sel="/mdscript[@name='Diplomacy']/cues/cue[@name='Start']/cues/cue[@name='DiplomaticEvents']/cues/cue[@name='DiplomaticEvent_Started']/cues/cue[@name='DiplomaticEvent_Concluded']/actions/do_if[@value='$PlayerOptionID?']/do_if[@value='$OutcomeID != $PlayerOptionID and $Risk != agentrisk.none']/set_value[@name='$Killed']" pos="after">
+		<set_value name="$Killed" exact="0" />
+	</add>
+</diff>
